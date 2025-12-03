@@ -56,7 +56,8 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 32000000,
     bidCount: 15,
     timeLeft: 300, 
-    image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=400',
+    // Ảnh Smartphone
+    image: 'https://cdn.pixabay.com/photo/2014/12/10/12/26/iphone-563067_1280.jpg',
     bidderName: '****Khoa',
     isHot: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
@@ -71,7 +72,8 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 95000000,
     bidCount: 8,
     timeLeft: 7200, 
-    image: 'https://images.unsplash.com/photo-1531297461136-82lw9z0u7j7?auto=format&fit=crop&q=80&w=400', 
+    // Ảnh Laptop
+    image: 'https://cdn.pixabay.com/photo/2016/11/21/16/27/laptop-1846277_1280.jpg',
     bidderName: '****Tuan',
     isHot: false,
     createdAt: '2023-11-25T10:00:00Z',
@@ -86,7 +88,8 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 52000000,
     bidCount: 22,
     timeLeft: 45000, 
-    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400',
+    // Ảnh Camera
+    image: 'https://cdn.pixabay.com/photo/2014/02/26/10/55/camera-275007_1280.jpg',
     bidderName: '****Nam',
     isHot: true,
     createdAt: '2023-11-20T08:00:00Z',
@@ -101,27 +104,13 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: null,
     bidCount: 6,
     timeLeft: 86400,
-    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=400',
+    // Ảnh Tablet
+    image: 'https://cdn.pixabay.com/photo/2014/11/12/15/48/ebook-528463_1280.jpg',
     bidderName: '****Linh',
     isHot: false,
     createdAt: '2023-11-26T09:00:00Z',
     description: 'Màn hình Mini-LED tuyệt đẹp. Máy trầy nhẹ góc trái.',
     bidHistory: generateBidHistory(21000000, 6)
-  },
-  {
-    id: 105,
-    name: 'Samsung Galaxy S24 Ultra - Gray Titanium',
-    categoryId: 1,
-    price: 26000000,
-    buyNowPrice: 30000000,
-    bidCount: 10,
-    timeLeft: 150, 
-    image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&q=80&w=400',
-    bidderName: '****Huy',
-    isHot: true,
-    createdAt: new Date().toISOString(),
-    description: 'Siêu phẩm AI của Samsung. Bút S-Pen tiện lợi.',
-    bidHistory: generateBidHistory(23000000, 10)
   },
   {
     id: 106,
@@ -131,7 +120,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 6500000,
     bidCount: 18,
     timeLeft: 3600,
-    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2018/09/17/14/27/headphones-3683983_1280.jpg', // Wireless Headphones
     bidderName: '****Audio',
     isHot: true,
     createdAt: new Date(Date.now() - 1000 * 3600 * 2).toISOString(),
@@ -146,7 +135,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 8500000,
     bidCount: 12,
     timeLeft: 18000,
-    image: 'https://images.unsplash.com/photo-1621644781602-d99622d1df33?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2019/07/02/07/39/bluetooth-4311748_1280.jpg', // Classic Speaker style
     bidderName: '****Rock',
     isHot: false,
     createdAt: '2023-11-29T10:00:00Z',
@@ -161,7 +150,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 7500000,
     bidCount: 9,
     timeLeft: 5400,
-    image: 'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2019/01/24/23/54/nintendo-switch-3953601_1280.jpg', // Nintendo Switch
     bidderName: '****Game',
     isHot: false,
     createdAt: '2023-11-28T15:00:00Z',
@@ -176,14 +165,13 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 4000000,
     bidCount: 25,
     timeLeft: 900,
-    image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2020/07/03/04/48/mechanical-keyboard-5365168_1280.jpg',
     bidderName: '****Tech',
     isHot: true,
     createdAt: new Date().toISOString(),
     description: 'Custom bàn phím cơ, vỏ nhôm nguyên khối, switch Gateron.',
     bidHistory: generateBidHistory(2000000, 25)
   },
-
   // --- 2. ĐỒNG HỒ (8 SP) ---
   {
     id: 201,
@@ -192,8 +180,8 @@ export const MOCK_PRODUCTS = [
     price: 450000000,
     buyNowPrice: 500000000,
     bidCount: 45,
-    timeLeft: 120, 
-    image: 'https://images.unsplash.com/photo-1612817288484-9691600799d8?auto=format&fit=crop&q=80&w=400',
+    timeLeft: 120,
+    image: 'https://cdn.pixabay.com/photo/2018/03/26/19/05/time-3263648_1280.jpg', // Luxury Watch
     bidderName: '****Minh',
     isHot: true,
     createdAt: '2023-10-20T08:00:00Z',
@@ -208,7 +196,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 21000000,
     bidCount: 12,
     timeLeft: 3600,
-    image: 'https://images.unsplash.com/photo-1675789538350-c8b6d39c0f92?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2015/06/25/17/21/smart-watch-821557_1280.jpg', // Smart Watch
     bidderName: '****Tai',
     isHot: false,
     createdAt: '2023-11-28T08:00:00Z',
@@ -223,7 +211,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 95000000,
     bidCount: 5,
     timeLeft: 172800,
-    image: 'https://images.unsplash.com/photo-1622434641406-a158123450f9?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/08/10/22/37/omega-1584466_1280.jpg', // Diver Watch
     bidderName: '****Phuc',
     isHot: false,
     createdAt: '2023-11-27T10:00:00Z',
@@ -238,7 +226,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 18000000,
     bidCount: 7,
     timeLeft: 5000,
-    image: 'https://images.unsplash.com/photo-1623998021646-60205c72f08d?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/03/27/18/03/wristwatch-1283309_1280.jpg', // Rugged Watch
     bidderName: '****Son',
     isHot: false,
     createdAt: '2023-11-26T15:00:00Z',
@@ -253,7 +241,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 16000000,
     bidCount: 30,
     timeLeft: 700,
-    image: 'https://images.unsplash.com/photo-1639037748460-70f2f3e8f804?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/11/02/20/25/hour-s-1792659_1280.jpg', // Dress Watch Metal
     bidderName: '****Thinh',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -268,7 +256,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 380000000,
     bidCount: 4,
     timeLeft: 259200,
-    image: 'https://images.unsplash.com/photo-1619176332822-68b64e0303d2?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2021/07/06/01/32/clock-6390411_1280.jpg', // Complex Dark Watch
     bidderName: '****Rich',
     isHot: true,
     createdAt: '2023-11-25T00:00:00Z',
@@ -283,7 +271,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 10000000,
     bidCount: 15,
     timeLeft: 12000,
-    image: 'https://images.unsplash.com/photo-1614164185128-e4899cae3fa1?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2021/07/12/16/55/wristwatch-6409941_1280.jpg', // Sport Watch
     bidderName: '****Fan',
     isHot: false,
     createdAt: '2023-11-28T09:00:00Z',
@@ -298,7 +286,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 23000000,
     bidCount: 8,
     timeLeft: 48000,
-    image: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2019/09/13/14/09/alps-4473993_1280.jpg', // GPS Sport Watch
     bidderName: '****Run',
     isHot: false,
     createdAt: '2023-11-29T08:00:00Z',
@@ -315,7 +303,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 10000000,
     bidCount: 25,
     timeLeft: 600,
-    image: 'https://images.unsplash.com/photo-1695523675027-44df0e15908b?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/11/19/18/06/feet-1840619_1280.jpg', // Sneakers
     bidderName: '****Kien',
     isHot: true,
     createdAt: '2023-11-29T09:00:00Z',
@@ -330,7 +318,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 40000000,
     bidCount: 18,
     timeLeft: 8000,
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2015/09/21/23/50/bag-950930_1280.jpg', // Luxury Handbag
     bidderName: '****Mai',
     isHot: true,
     createdAt: '2023-11-25T14:00:00Z',
@@ -345,7 +333,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 3200000,
     bidCount: 5,
     timeLeft: 90000,
-    image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2020/03/02/11/52/accessory-4895500_1280.jpg', // Sunglasses
     bidderName: '****Hung',
     isHot: false,
     createdAt: '2023-11-28T11:00:00Z',
@@ -360,7 +348,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 11000000,
     bidCount: 9,
     timeLeft: 43200,
-    image: 'https://images.unsplash.com/photo-1624223287010-38829f796677?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2013/06/16/21/56/belt-139757_1280.jpg', // Leather Belt
     bidderName: '****Duc',
     isHot: false,
     createdAt: '2023-11-27T16:00:00Z',
@@ -375,7 +363,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 72000000,
     bidCount: 20,
     timeLeft: 3000,
-    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2015/11/20/03/53/package-1052370_1280.jpg', // Black Bag
     bidderName: '****Queen',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -390,7 +378,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 8000000,
     bidCount: 14,
     timeLeft: 15000,
-    image: 'https://images.unsplash.com/photo-1584735175315-9d5df23860e6?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2020/07/19/05/29/adidas-5418991_1280.jpg', // Modern Sneaker
     bidderName: '****Hype',
     isHot: false,
     createdAt: '2023-11-29T14:00:00Z',
@@ -405,7 +393,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 5500000,
     bidCount: 11,
     timeLeft: 60000,
-    image: 'https://images.unsplash.com/photo-1544923246-77307dd654cb?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2017/10/06/04/32/jacket-2821961_1280.jpg', // Puffer Jacket
     bidderName: '****Winter',
     isHot: true,
     createdAt: '2023-11-28T08:00:00Z',
@@ -420,7 +408,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 5000000,
     bidCount: 6,
     timeLeft: 100000,
-    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/08/29/21/09/sunglasses-1629182_1280.jpg', // Fashion Sunglasses
     bidderName: '****Cool',
     isHot: false,
     createdAt: '2023-11-26T10:00:00Z',
@@ -437,7 +425,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 8000000,
     bidCount: 14,
     timeLeft: 2000,
-    image: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/03/28/20/19/dollar-bill-1286854_1280.jpg', // Old Banknotes
     bidderName: '****Lao',
     isHot: false,
     createdAt: '2023-11-20T10:00:00Z',
@@ -452,7 +440,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: null,
     bidCount: 20,
     timeLeft: 600,
-    image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2015/03/24/06/40/cup-687147_1280.jpg', // Antique Vase
     bidderName: '****Giam',
     isHot: true,
     createdAt: '2023-11-15T08:00:00Z',
@@ -467,7 +455,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 4500000,
     bidCount: 6,
     timeLeft: 120000,
-    image: 'https://images.unsplash.com/photo-1596484552993-9c5950004e76?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2021/05/06/15/48/democratic-republic-of-vietnam-6233804_1280.jpg', // Stamps
     bidderName: '****Phuong',
     isHot: false,
     createdAt: '2023-11-22T09:00:00Z',
@@ -476,13 +464,13 @@ export const MOCK_PRODUCTS = [
   },
   {
     id: 404,
-    name: 'Tranh sơn dầu phố cổ Hà Nội (Chép)',
+    name: 'Tranh sơn dầu phố cổ Hà Nội',
     categoryId: 4,
     price: 4500000,
     buyNowPrice: 6000000,
     bidCount: 8,
     timeLeft: 50000,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb39279c0f?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2017/09/04/08/53/vietnam-2713262_1280.jpg', // Oil Painting
     bidderName: '****Art',
     isHot: false,
     createdAt: '2023-11-25T12:00:00Z',
@@ -497,7 +485,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 22000000,
     bidCount: 3,
     timeLeft: 345600,
-    image: 'https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2018/04/05/20/30/outdoors-3294053_1280.jpg', // Lego
     bidderName: '****Brick',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -512,7 +500,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: null,
     bidCount: 40,
     timeLeft: 300,
-    image: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2016/07/17/01/40/gameboy-1523083_1280.jpg', // Pokemon Card
     bidderName: '****Poke',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -521,13 +509,13 @@ export const MOCK_PRODUCTS = [
   },
   {
     id: 407,
-    name: 'Mô hình One Piece Luffy Gear 5',
+    name: 'Mô hình One Piece Luffy',
     categoryId: 4,
     price: 2500000,
     buyNowPrice: 3000000,
     bidCount: 12,
     timeLeft: 12000,
-    image: 'https://images.unsplash.com/photo-1607604276583-eef5f0b7e950?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2017/07/08/16/06/one-piece-2484804_1280.jpg', // Anime Figure
     bidderName: '****Wibu',
     isHot: false,
     createdAt: '2023-11-29T11:00:00Z',
@@ -542,7 +530,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 1500000,
     bidCount: 9,
     timeLeft: 80000,
-    image: 'https://images.unsplash.com/photo-1620621387607-0b65cb3317df?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2020/03/02/16/19/vintage-4896141_1280.jpg', // Old Coin
     bidderName: '****Coin',
     isHot: false,
     createdAt: '2023-11-27T14:00:00Z',
@@ -558,8 +546,8 @@ export const MOCK_PRODUCTS = [
     price: 55000000,
     buyNowPrice: 65000000,
     bidCount: 30,
-    timeLeft: 400, 
-    image: 'https://images.unsplash.com/photo-1620802051782-726fa8356dd9?auto=format&fit=crop&q=80&w=400',
+    timeLeft: 400,
+    image: 'https://cdn.pixabay.com/photo/2023/01/14/11/22/motorcycle-7717975_1280.jpg', // Vespa
     bidderName: '****Vinh',
     isHot: true,
     createdAt: '2023-11-10T08:00:00Z',
@@ -574,7 +562,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 48000000,
     bidCount: 11,
     timeLeft: 7000,
-    image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57e3081?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2023/04/25/16/56/bike-7950617_1280.jpg', // Road Bike
     bidderName: '****Cuong',
     isHot: false,
     createdAt: '2023-11-28T14:00:00Z',
@@ -589,7 +577,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 4200000,
     bidCount: 5,
     timeLeft: 200000,
-    image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2022/09/15/23/32/mustang-7457467_1280.jpg', // Muscle Car Model
     bidderName: '****Toy',
     isHot: false,
     createdAt: '2023-11-29T10:00:00Z',
@@ -604,7 +592,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 95000000,
     bidCount: 22,
     timeLeft: 800,
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2019/09/24/13/47/scooter-4501341_1280.png', // White Scooter
     bidderName: '****Scooter',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -619,7 +607,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 3200000,
     bidCount: 8,
     timeLeft: 40000,
-    image: 'https://images.unsplash.com/photo-1592873105749-0a67f654b419?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2014/10/27/18/57/bicycle-helmet-505399_1280.jpg', // Motorcycle Helmet
     bidderName: '****Biker',
     isHot: false,
     createdAt: '2023-11-28T16:00:00Z',
@@ -634,7 +622,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 9500000,
     bidCount: 16,
     timeLeft: 5000,
-    image: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2017/08/06/16/01/camera-2593685_1280.jpg', // GoPro
     bidderName: '****Cam',
     isHot: true,
     createdAt: new Date().toISOString(),
@@ -649,7 +637,7 @@ export const MOCK_PRODUCTS = [
     buyNowPrice: 2200000,
     bidCount: 4,
     timeLeft: 150000,
-    image: 'https://images.unsplash.com/photo-1621358994703-91264c20498b?auto=format&fit=crop&q=80&w=400',
+    image: 'https://cdn.pixabay.com/photo/2017/04/19/14/35/ducati-2242487_1280.jpg', // Ducati Moto
     bidderName: '****Moto',
     isHot: false,
     createdAt: '2023-11-27T08:00:00Z',
