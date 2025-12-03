@@ -1,11 +1,13 @@
 import { User, ShoppingCart, Gavel,Heart, Flame } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import CountDown from './CountDown';
+import { Link } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
   const isNew = new Date() - new Date(product.createdAt) < 30 * 60 * 1000; // 30 phút
 
   return (
+    <Link to={`/products/${product.id}`}>
     <div className={`group bg-white rounded-xl border transition-all hover:shadow-lg hover:-translate-y-1 ${
       isNew ? 'border-blue-200 ring-1 ring-blue-100' : 'border-gray-200'
     }`}>
@@ -48,13 +50,14 @@ const ProductCard = ({ product }) => {
         </div>
 
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-          <CountDown seconds={product.timeLeft} />
+          <CountDown seconds={product.timeLeft} className="text-xs truncate" />
           <button className="bg-blue-50 text-blue-600 p-1.5 rounded hover:bg-blue-600 hover:text-white transition-colors">
             <ShoppingCart size={18} />
           </button>
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 
