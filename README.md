@@ -20,11 +20,11 @@ cd ../frontend && npm install
 To run the backend:
 
 ```bash
-cd backend && npm install && npm start
+cd backend && npm install && npm run dev
 ```
 
 To run the frontend:
 
 ```bash
-cd frontend && npm install && npm start
+cd frontend && npm install && npm run dev
 ``` 

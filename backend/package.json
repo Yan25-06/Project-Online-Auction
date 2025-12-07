@@ -1,11 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "", 
+  "description": "",
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts", 
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,6 +22,8 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "tsx": "^4.21.0"
+    "supabase": "^2.65.6",
+    "tsx": "^4.21.0",
+    "shared-auction": "file:../shared"
   }
 }

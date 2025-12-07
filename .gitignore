@@ -1,2 +1,5 @@
 .env
-requirements
+requirements  
+.vscode
+duydevlog 
+node_modules

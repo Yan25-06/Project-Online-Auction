@@ -1,5 +1,6 @@
 import express from 'express';
 import { exampleRouter } from './routes/example.route.js';
+import { sharedFunction } from 'shared-auction/test.js';
 
 const app = express();
 const port = 3000;
