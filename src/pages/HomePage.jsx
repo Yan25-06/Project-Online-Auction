@@ -59,13 +59,13 @@ const HomePage = () => {
                 subtitle="Cơ hội chót để sở hữu sản phẩm giá tốt"
             />
             {loading ? (
-                <div className="grid grid-cols-5 gap-6 animate-pulse">
+                <div className="grid md:grid-cols-5 gap-6 animate-pulse">
                 {[...Array(5)].map((_, i) => (
                     <div key={i} className="bg-gray-200 h-80 rounded-xl"></div>
                 ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-5 gap-6">
+                <div className="grid md:grid-cols-5 gap-6">
                 {[...MOCK_PRODUCTS].sort((a, b) => a.timeLeft - b.timeLeft).slice(0, 5).map(product => (
                     <ProductCard key={product.id} product={product} />
                 ))}
@@ -80,7 +80,7 @@ const HomePage = () => {
                 title="Đấu giá sôi động" 
                 subtitle="Các sản phẩm đang được săn đón nhiều nhất"
             />
-            <div className="grid grid-cols-5 gap-6">
+            <div className="grid md:grid-cols-5 gap-6">
                 {[...MOCK_PRODUCTS].sort((a, b) => b.bidCount - a.bidCount).slice(0, 5).map(product => (
                     <ProductCard key={product.id} product={product} />
                 ))}
@@ -92,7 +92,7 @@ const HomePage = () => {
                 icon={CircleDollarSign} 
                 title="Sản phẩm giá cao" 
                 subtitle="Top 5 sản phẩm có giá trị cao nhất sàn" />
-            <div className="grid grid-cols-5 gap-6">
+            <div className="grid md:grid-cols-5 gap-6">
                 {[...MOCK_PRODUCTS].sort((a, b) => b.price - a.price).slice(0, 5).map(product => (
                 <ProductCard key={product.id} product={product} />
                 ))}
