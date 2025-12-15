@@ -3,7 +3,7 @@ import cors from 'cors';
 import { exampleRouter } from './routes/example.route.js';
 import { productRouter } from './routes/product.route.js';
 import { categoryRouter } from './routes/category.route.js';
-import { sharedFunction } from 'shared-auction/test.js';
+// import { sharedFunction } from 'shared-auction/test.js';
 
 const app = express();
 const port = 3000;

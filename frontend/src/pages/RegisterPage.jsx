@@ -1,6 +1,7 @@
 import { Mail, Lock, User, MapPin, UserPlus, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthService } from '../services/authService'; 
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -47,42 +48,39 @@ const RegisterPage = () => {
     
     setLoading(true);
 
-    // Simulate async server check
     setTimeout(() => {
-      // Mock unique email check
-      if (formData.email === 'test@gmail.com') {
-         setError('Email này đã được sử dụng. Vui lòng chọn email khác.');
-         setLoading(false);
-         return;
-      }
-
-      // Generate OTP
       const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(newOtp);
-      // In real app, this sends email. Here we alert.
-      alert(`[DEMO] Mã OTP xác thực của bạn là: ${newOtp}`);
-      
+      alert(`[DEMO] Mã OTP: ${newOtp}`);
       setLoading(false);
       setStep(2);
-    }, 1500);
+    }, 1000);
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => { // Thêm async
     e.preventDefault();
+    
     if (otp === generatedOtp) {
-       // Simulate bcrypt hashing (client-side demo only)
-       // In reality, password should be sent raw over HTTPS and hashed on server
-       const salt = "$2b$10$EixZaYVK1fsbw1ZfbX3OXe"; // Mock salt
-       const hashedPassword = `bcrypt(${formData.password}, ${salt})`; 
-       
-       console.log('--- ĐĂNG KÝ THÀNH CÔNG ---');
-       console.log('User:', { ...formData, password: hashedPassword });
-       console.log('Algorithm: bcrypt/scrypt');
-       
-       alert('Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
-       navigate('/login');
+       try {
+          setLoading(true); 
+
+          await AuthService.registerUser({
+              fullName: formData.fullName,
+              email: formData.email,
+              address: formData.address,
+              password: formData.password
+          });
+
+          alert('Đăng ký thành công! Đang chuyển hướng...');
+          navigate('/login');
+
+       } catch (err) {
+          setError(err.message || 'Đăng ký thất bại');
+       } finally {
+          setLoading(false);
+       }
     } else {
-       setError('Mã OTP không chính xác. Vui lòng kiểm tra lại.');
+       setError('Mã OTP không chính xác.');
     }
   };
 

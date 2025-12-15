@@ -7,7 +7,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CategoryPage from './pages/CategoryPage';
-import SearchPage from './pages/SearchPage';
+import SearchResultPage from './pages/SearchResultPage';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -18,7 +18,7 @@ const router = createBrowserRouter(
       <Route path="/products" element={<HomePage />} />
       <Route path="/products/:id" element={<DetailsPage />} />
       <Route path="/categories/:id" element={<CategoryPage />} />
-      <Route path="/search" element={<SearchPage />} />
+      <Route path="/search" element={<SearchResultPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Route>
   )

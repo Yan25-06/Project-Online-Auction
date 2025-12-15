@@ -1,17 +1,45 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Facebook, Github, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Facebook, Github, Loader, AlertCircle } from 'lucide-react'; // Thêm icon Loader, AlertCircle
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthService } from '../services/authService'; 
+
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login data:', formData);
-    // Sau này sẽ gọi API đăng nhập ở đây
-    navigate("/products");
+    setLoading(true);
+    setError(''); 
+
+    try {
+      // 3. Gọi hàm đăng nhập từ Service
+      const response = await AuthService.loginUser(formData);
+
+      console.log('Login Success:', response);
+
+      // 4. Lưu Token và User Info vào LocalStorage
+      // Để các request sau này (như thêm giỏ hàng) có thể dùng token này
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // 5. Chuyển hướng về trang chủ
+      // (Dùng replace: true để user không back lại trang login được)
+      navigate('/', { replace: true });
+      
+      // Tùy chọn: Reload lại trang để Header cập nhật tên User ngay lập tức
+      // window.location.href = "/"; 
+
+    } catch (err) {
+      // 6. Xử lý lỗi (Sai pass, email không tồn tại...)
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +53,14 @@ const LoginPage = () => {
             Chào mừng bạn quay trở lại sàn đấu giá
           </p>
         </div>
+
+        {/* 7. Hiển thị thông báo lỗi nếu có */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 flex items-center">
+             <AlertCircle className="text-red-500 mr-2" size={20} />
+             <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -102,9 +138,18 @@ const LoginPage = () => {
           <div>
             <button
                 type="submit"
-                className="group relative w-full flex justify-center py-2.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md"
+                disabled={loading} // Disable khi đang loading
+                className={`group relative w-full flex justify-center py-2.5 px-4 text-white rounded-lg shadow-md transition-all
+                  ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
+                `}
             >
-                Đăng nhập
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader className="animate-spin h-5 w-5" /> Đang xử lý...
+                  </span>
+                ) : (
+                  'Đăng nhập'
+                )}
             </button>
           </div>
 
@@ -120,11 +165,11 @@ const LoginPage = () => {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+              <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
                 <Facebook className="h-5 w-5 text-blue-600" />
                 <span className="ml-2">Facebook</span>
               </button>
-              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+              <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
                 <Github className="h-5 w-5 text-gray-800" />
                 <span className="ml-2">Github</span>
               </button>
