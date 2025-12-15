@@ -38,7 +38,7 @@ export const ProductService = {
   },
 
   getTopPrices: async () => {
-    return ProductService.getAll({ sort: 'current_price', order: 'desc', limit: 5});
+    return ProductService.getAll({ sort: 'current_price', order: 'desc', limit: 5 });
   },
 
   getById: async (id) => {
@@ -65,12 +65,11 @@ export const CategoryService = {
   },
 
   getProductsById: async (id) => {
-    const response = await apiClient.get(`/categories/${id}`);
+    const response = await apiClient.get(`/categories/${id}/products`);
     return response.data;
   }
 };
 
-// You can also export standalone functions if you prefer that style over objects:
 export const AuthService = {
     loginUser: async (credentials) => {
         const response = await apiClient.post('/auth/login', credentials);
