@@ -8,10 +8,10 @@ export const ProductController = {
         const { 
             sort = null,
             order = null,
-            limit = 5,
+            limit = '5',
         } = req.query
-
-        const products = await ProductService.getAll(sort, order, limit);
+        const limitNum = Number(limit) || 5;
+        const products = await ProductService.getAll(sort as string, order as string, limitNum);
         return res.status(200).json(products);
     },
 
