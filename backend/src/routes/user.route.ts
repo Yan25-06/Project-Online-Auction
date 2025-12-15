@@ -6,11 +6,13 @@ const userRouter = Router();
 userRouter.get('/', UserController.findAll);
 userRouter.post('/', UserController.create);
 userRouter.get('/email', UserController.getByEmail);
-userRouter.get('/upgrade-requests', UserController.getPendingUpgradeRequests);
-userRouter.post('/:id/request-upgrade', UserController.requestUpgrade);
-userRouter.post('/:id/approve-upgrade', UserController.approveUpgrade);
-userRouter.post('/:id/reject-upgrade', UserController.rejectUpgrade);
+import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
+
+userRouter.get('/upgrade-requests', requireAuth, requireRole('admin'), UserController.getPendingUpgradeRequests);
+userRouter.post('/:id/request-upgrade', requireAuth, requireRole('bidder'), UserController.requestUpgrade);
+userRouter.post('/:id/approve-upgrade', requireAuth, requireRole('admin'), UserController.approveUpgrade);
+userRouter.post('/:id/reject-upgrade', requireAuth, requireRole('admin'), UserController.rejectUpgrade);
 userRouter.get('/:id', UserController.getById);
-userRouter.put('/:id', UserController.update);
+userRouter.put('/:id', requireAuth, UserController.update);
 
 export { userRouter };

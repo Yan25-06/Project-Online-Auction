@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import { exampleModel } from "../models/example.model.js"; 
 import { ProductService } from "../services/product.service.js";
 
 

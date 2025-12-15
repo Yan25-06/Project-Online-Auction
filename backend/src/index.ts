@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import { exampleRouter } from './routes/example.route.js';
 import { productRouter } from './routes/product.route.js';
 import { categoryRouter } from './routes/category.route.js';
 import { userRouter } from './routes/user.route.js';
@@ -33,6 +32,10 @@ app.use('/api/orders', orderRouter);
 app.use('/api/questions', questionRouter);
 app.use('/api/ratings', ratingRouter);
 app.use('/api/blocked-bidders', blockedBidderRouter);
+
+// Global error handler (should be last middleware)
+import { errorHandler } from './middlewares/error.middleware.js';
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
