@@ -23,6 +23,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
     "cors": "^2.8.5",
     "shared-auction": "file:../shared",
     "supabase": "^2.65.6",
