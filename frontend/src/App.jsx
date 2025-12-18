@@ -6,8 +6,7 @@ import DetailsPage from './pages/DetailsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import CategoryPage from './pages/CategoryPage';
-import SearchResultPage from './pages/SearchResultPage';
+import ProductListingPage from './pages/ProductListPage';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -17,8 +16,8 @@ const router = createBrowserRouter(
       <Route path="/login" element={<LoginPage />} />
       <Route path="/products" element={<HomePage />} />
       <Route path="/products/:id" element={<DetailsPage />} />
-      <Route path="/categories/:id" element={<CategoryPage />} />
-      <Route path="/search" element={<SearchResultPage />} />
+      <Route path="/categories/:categoryId" element={<ProductListingPage />} />
+      <Route path="/search" element={<ProductListingPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Route>
   )

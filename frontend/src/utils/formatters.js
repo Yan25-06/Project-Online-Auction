@@ -3,12 +3,52 @@ export const formatCurrency = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-// Logic hiển thị thời gian tương đối
-export const formatTimeRelative = (seconds) => {
-  if (seconds < 60) return `${seconds} giây`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} phút`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ`;
-  return `${Math.floor(seconds / 86400)} ngày`;
+export const maskName = (name) => {
+  if (!name) return "Người dùng";
+  
+  const str = name.trim();
+  
+  // Nếu tên quá ngắn (ví dụ: "An") -> "A*"
+  if (str.length <= 2) {
+    return str[0] + "*";
+  }
+
+  // Nếu tên ngắn vừa (3-4 ký tự) -> "Kh**"
+  if (str.length <= 4) {
+    return str.substring(0, 2) + "**";
+  }
+
+  // Tên dài: Giữ 2 ký tự đầu + "***" + 2 ký tự cuối
+  const firstChars = str.substring(0, 2);
+  const lastChars = str.substring(str.length - 2);
+  
+  return `${firstChars}****${lastChars}`;
+};
+
+export const formatTimeRelative = (dateString) => {
+  if (!dateString) return '';
+
+  const now = new Date();
+  const endDate = new Date(dateString);
+  const diff = endDate - now; // Tính khoảng cách millisecond
+
+  // Nếu đã quá hạn
+  if (diff <= 0) {
+    return 'Đã kết thúc';
+  }
+
+  // Quy đổi ra đơn vị thời gian
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) {
+    return `Còn ${days} ngày ${hours} giờ`;
+  }
+  if (hours > 0) {
+    return `Còn ${hours} giờ ${minutes} phút`;
+  }
+  return `Còn ${minutes} phút`;
 };
 
 // Kiểm tra sản phẩm mới

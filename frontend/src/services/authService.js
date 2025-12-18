@@ -1,5 +1,6 @@
+// import { resolve } from 'path';
 import { supabase } from '../config/supabase';
-
+import { UserService } from './backendService';
 export const AuthService = {
   login: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -9,14 +10,65 @@ export const AuthService = {
   },
 
   register: async (email, password, userData = {}) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    // Pass user metadata in the options object so Supabase stores it in user metadata
+    const options = { data: userData };
+    const { data, error } = await supabase.auth.signUp({ email, password, options});
     if (error) throw error;
     
     if (data.session) {
       localStorage.setItem('token', data.session.access_token);
+      localStorage.setItem('user', data.user)
     }
-    
+    const res = await UserService.update(data.user.id, userData);
+    console.log("Debug user:" + res);
     return data.user;
+  },
+
+  sendOtp: async (email) => {
+    console.log("Đang gửi OTP đến:", email);
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: true,
+      }
+    });
+    if (error) {
+      console.error("Lỗi gửi OTP:", error);
+      throw error;
+    }
+    return data;
+  },
+
+  verifyOtp: async ({ email, token }) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email', 
+    });
+    if (error) {
+      console.error("Lỗi xác thực:", error);
+      throw error;
+    }
+    if (data.session) {
+      localStorage.setItem('token', data.session.access_token);
+    }
+    return data;
+  },
+
+  updateUserPasswordAndProfile: async (password, userData) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: password,
+      data: userData
+    });
+    if (error) throw error;
+    if (data?.user?.id) {
+        try {
+            await UserService.update(data.user.id, userData);
+        } catch (backendError) {
+            console.error("Lỗi lưu DB backend:", backendError);
+        }
+    }
+    return data;
   },
 
   logout: async () => {

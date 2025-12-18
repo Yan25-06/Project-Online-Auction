@@ -7,7 +7,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    fullName: '',
+    full_name: '',
     email: '',
     address: '',
     password: '',
@@ -46,41 +46,61 @@ const RegisterPage = () => {
       return;
     }
     
-    setLoading(true);
-
-    setTimeout(() => {
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(newOtp);
-      alert(`[DEMO] Mã OTP: ${newOtp}`);
-      setLoading(false);
+    try {
+      setLoading(true);
+      // Send OTP email via Supabase
+      await AuthService.sendOtp(formData.email);
       setStep(2);
-    }, 1000);
+    } catch (err) {
+      setError(err?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = async (e) => { // Thêm async
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    
-    if (otp === generatedOtp) {
-       try {
-          setLoading(true); 
+    try {
+      setLoading(true);
 
-          await AuthService.registerUser({
-              fullName: formData.fullName,
-              email: formData.email,
-              address: formData.address,
-              password: formData.password
-          });
+      const verify = await AuthService.verifyOtp({ email: formData.email, token: otp});
 
-          alert('Đăng ký thành công! Đang chuyển hướng...');
-          navigate('/login');
+      if (verify?.data?.user || verify?.user) {
+        try {
+           await AuthService.updateUserPasswordAndProfile(
+               formData.password, 
+               {
+                  full_name: formData.full_name,
+                  address: formData.address
+               }
+           );
 
-       } catch (err) {
-          setError(err.message || 'Đăng ký thất bại');
-       } finally {
-          setLoading(false);
-       }
-    } else {
-       setError('Mã OTP không chính xác.');
+        } catch (updateError) {
+            console.error("Lỗi cập nhật thông tin:", updateError);
+        }
+
+        alert('Đăng ký tài khoản thành công!');
+        navigate('/login');
+        return;
+      }
+
+      // If verification didn't create the user, fallback to explicit register
+      // const user = await AuthService.register(formData.email, formData.password, {
+      //   full_name: formData.full_name,
+      //   address: formData.address
+      // });
+
+      // if (user) {
+      //   alert('Đăng ký thành công! Đang chuyển hướng tới đăng nhập...');
+      //   navigate('/login');
+      // } else {
+      //   setError('Đăng ký không thành công. Vui lòng thử lại.');
+      // }
+
+    } catch (err) {
+      setError(err?.message || 'Xác thực thất bại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,12 +135,12 @@ const RegisterPage = () => {
                     <User size={18} />
                   </div>
                   <input
-                    name="fullName"
+                    name="full_name"
                     type="text"
                     required
                     className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     placeholder="Nguyễn Văn A"
-                    value={formData.fullName}
+                    value={formData.full_name}
                     onChange={handleInputChange}
                   />
                 </div>

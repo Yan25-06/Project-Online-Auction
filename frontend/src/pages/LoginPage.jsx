@@ -17,26 +17,16 @@ const LoginPage = () => {
     setError(''); 
 
     try {
-      // 3. Gọi hàm đăng nhập từ Service
-      const response = await AuthService.loginUser(formData);
+      // 3. Gọi hàm đăng nhập từ Service (AuthService.login(email, password))
+      const user = await AuthService.login(formData.email, formData.password);
 
-      console.log('Login Success:', response);
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
 
-      // 4. Lưu Token và User Info vào LocalStorage
-      // Để các request sau này (như thêm giỏ hàng) có thể dùng token này
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-
-      // 5. Chuyển hướng về trang chủ
-      // (Dùng replace: true để user không back lại trang login được)
       navigate('/', { replace: true });
-      
-      // Tùy chọn: Reload lại trang để Header cập nhật tên User ngay lập tức
-      // window.location.href = "/"; 
-
     } catch (err) {
-      // 6. Xử lý lỗi (Sai pass, email không tồn tại...)
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      setError(err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }

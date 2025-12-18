@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 const SectionTitle = ({icon: Icon, title, subtitle }) => {
   return (
     <div className="flex items-center justify-between mb-6">
@@ -12,9 +13,9 @@ const SectionTitle = ({icon: Icon, title, subtitle }) => {
             {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
         </div>
         </div>
-        <button className="text-sm text-blue-600 hover:underline flex items-center gap-1 font-medium">
+        <Link to="/search" className="text-sm text-blue-600 hover:underline flex items-center gap-1 font-medium">
         Xem tất cả <ChevronRight size={16} />
-        </button>
+        </Link>
     </div>
   )
 }
