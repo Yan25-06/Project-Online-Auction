@@ -71,7 +71,7 @@ const ProductCard = ({ product }) => {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          toggleWatchList(product.id);
+          toggleWatchList(product);
         }}
         className="absolute top-2 right-2 z-20 p-2 rounded-full bg-white/90 hover:bg-white shadow-sm transition-all group-hover:scale-110"
         title={isFavorite ? "Bỏ theo dõi" : "Theo dõi"}

@@ -4,9 +4,9 @@ import { requireAuth } from '../middlewares/auth.middleware.js';
 
 const watchlistRouter = Router();
 
-watchlistRouter.post('/', requireAuth, WatchlistController.add);
-watchlistRouter.delete('/:userId/:productId', requireAuth, WatchlistController.remove);
-watchlistRouter.get('/:userId/:productId', requireAuth, WatchlistController.isInWatchlist);
 watchlistRouter.get('/user/:userId', requireAuth, WatchlistController.findByUser);
+watchlistRouter.get('/:userId/:productId', requireAuth, WatchlistController.isInWatchlist);
+watchlistRouter.post('/:productId', requireAuth, WatchlistController.add);
+watchlistRouter.delete('/:productId', requireAuth, WatchlistController.remove);
 
 export { watchlistRouter };

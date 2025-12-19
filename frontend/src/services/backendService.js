@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import { supabase } from '../config/supabase';
 // 1. Create the Axios Instance
 // We don't export this directly to force the app to use the functions below
 const apiClient = axios.create({
@@ -11,13 +11,19 @@ const apiClient = axios.create({
 });
 
 // Optional: Add interceptors (e.g., for attaching tokens)
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+apiClient.interceptors.request.use(
+  async (config) => {
+  const { data } = await supabase.auth.getSession();  
+  const token = data?.session?.access_token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 
 // 2. Define Custom Service Functions
@@ -171,7 +177,7 @@ export const BidService = {
 
 export const WatchlistService = {
   add: async (productId) => {
-    const response = await apiClient.post('/watchlists', { productId });
+    const response = await apiClient.post(`/watchlists/${productId}`);
     return response.data;
   },
 

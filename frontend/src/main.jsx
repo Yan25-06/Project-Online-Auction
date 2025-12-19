@@ -6,10 +6,13 @@ import "flowbite";
 import "flowbite-react";
 import "flowbite/dist/flowbite.min.css";
 import { WatchListProvider } from './context/WatchListContext.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <WatchListProvider>
-      <App />
-    </WatchListProvider>
+    <AuthProvider>
+      <WatchListProvider>
+        <App />
+      </WatchListProvider>
+    </AuthProvider>
   </StrictMode>,
 )

@@ -3,32 +3,30 @@ import { User, Gavel, Heart, LogOut, ChevronDown } from "lucide-react"; // Thêm
 import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useWatchList } from "../../context/WatchListContext";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = () => {
   const { watchList } = useWatchList();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Lỗi đọc dữ liệu user", error);
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   const storedUser = localStorage.getItem("user");
+  //   if (storedUser) {
+  //     try {
+  //       setUser(JSON.parse(storedUser));
+  //     } catch (error) {
+  //       console.error("Lỗi đọc dữ liệu user", error);
+  //     }
+  //   }
+  // }, []);
 
   // 2. Hàm xử lý Đăng xuất
   const handleLogout = () => {
-    // Xóa dữ liệu trong LocalStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
 
     // Reset state
-    setUser(null);
     setShowDropdown(false);
 
     // Chuyển về trang login hoặc trang chủ

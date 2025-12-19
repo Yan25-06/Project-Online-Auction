@@ -6,6 +6,7 @@ import DetailsPage from './pages/DetailsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import UserPage from './pages/UserPage';
 import ProductListingPage from './pages/ProductListPage';
 
 const router = createBrowserRouter(
@@ -18,6 +19,7 @@ const router = createBrowserRouter(
       <Route path="/products/:id" element={<DetailsPage />} />
       <Route path="/categories/:categoryId" element={<ProductListingPage />} />
       <Route path="/search" element={<ProductListingPage />} />
+      <Route path="/user" element={<UserPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Route>
   )

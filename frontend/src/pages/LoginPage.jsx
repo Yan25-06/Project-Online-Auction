@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Facebook, Github, Loader, AlertCircle } from 'lucide-react'; // Thêm icon Loader, AlertCircle
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/authService'; 
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -18,12 +19,7 @@ const LoginPage = () => {
 
     try {
       // 3. Gọi hàm đăng nhập từ Service (AuthService.login(email, password))
-      const user = await AuthService.login(formData.email, formData.password);
-
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-
+      await AuthService.login(formData.email, formData.password);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');

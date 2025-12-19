@@ -12,7 +12,7 @@ export const AuthService = {
   register: async (email, password, userData = {}) => {
     // Pass user metadata in the options object so Supabase stores it in user metadata
     const options = { data: userData };
-    const { data, error } = await supabase.auth.signUp({ email, password, options});
+    const { data, error } = await supabase.auth.signUp({ email, password, options });
     if (error) throw error;
     
     if (data.session) {

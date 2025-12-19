@@ -4,8 +4,8 @@ import { WatchlistService } from '../services/watchlist.service.js';
 export const WatchlistController = {
   add: async (req: Request, res: Response) => {
     try {
-      const { userId, productId } = req.body;
-      if (!userId || !productId) return res.status(400).json({ error: 'userId and productId required' });
+      const productId = req.params.productId as string;
+      const userId = req.user.id;
       const added = await WatchlistService.add(userId, productId);
       return res.status(201).json(added);
     } catch (err: any) {
@@ -15,7 +15,7 @@ export const WatchlistController = {
 
   remove: async (req: Request, res: Response) => {
     try {
-      const userId = req.params.userId as string;
+      const userId = req.user.id;
       const productId = req.params.productId as string;
       await WatchlistService.remove(userId, productId);
       return res.status(204).send();
