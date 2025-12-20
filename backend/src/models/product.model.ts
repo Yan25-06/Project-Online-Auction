@@ -23,6 +23,25 @@ export const productModel = {
     return data;
   },
 
+  // Hàm xử lý upload file lên Storage
+  async uploadImage(file: any) {
+    const fileName = `product_${Date.now()}_${file.originalname}`;
+
+    const { data, error } = await supabase.storage
+      .from('product_images') 
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage
+      .from('product_images')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  },
   // Create product
   async create(productData: CreateProductInput): Promise<Product> {
     const { data, error } = await supabase

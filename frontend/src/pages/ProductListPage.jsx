@@ -106,7 +106,6 @@ const ProductListingPage = () => {
 
   return (
     <>
-      <Header />
       <div className="bg-gray-50 min-h-screen pb-12 animate-fadeIn">
         {/* --- PHẦN HEADER CỦA TRANG --- */}
         <div className="bg-white border-b border-gray-200 mb-8 shadow-sm">

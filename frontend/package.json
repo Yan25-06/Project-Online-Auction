@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/vite": "^4.1.17",
+    "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^1.13.2",
     "flowbite": "^2.5.2",
     "flowbite-react": "^0.12.10",

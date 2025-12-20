@@ -102,7 +102,6 @@ const HomePage = () => {
 
 	return (
 		<>
-			<Header />
 			<div className="container mx-auto px-4 py-8 space-y-12">
 				{/* --- SECTION 1: DANH MỤC & BANNER --- */}
 				<section className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { User, Gavel, Heart, LogOut, ChevronDown } from "lucide-react"; // Thêm icon LogOut, ChevronDown
+import { User, Gavel, Heart, LogOut, Plus } from "lucide-react"; // Thêm icon LogOut, ChevronDown
 import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useWatchList } from "../../context/WatchListContext";
@@ -55,6 +55,9 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center gap-4">
+            <Link to="/post-product" className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 shadow-md flex items-center gap-2 transition-all hover:shadow-lg">
+               <Plus size={18} /> Đăng bán
+            </Link>
             {/* Watchlist */}
             {watchList.length > 0 && (
               <div className="flex items-center gap-1 text-sm font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
