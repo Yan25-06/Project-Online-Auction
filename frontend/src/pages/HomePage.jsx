@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import ProductCard from "../components/product/ProductCard";
 import SectionTitle from "../components/product/SectionTitle";
-import Header from "../components/common/Header";
 
 import { ProductService, CategoryService } from "../services/backendService";
 

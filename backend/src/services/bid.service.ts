@@ -17,6 +17,12 @@ export const BidService = {
       throw new Error('Auction is not active');
     }
 
+    // Prevent seller from bidding on their own product
+    const sellerId = product.seller_id || (product.seller && product.seller.id);
+    if (sellerId && sellerId === bidder_id) {
+      throw new Error('Sellers cannot bid on their own product');
+    }
+
     // Check bidder rating / permission to bid
     const canBid = await userModel.canBid(bidder_id);
     if (!canBid) throw new Error('Your rating is too low to place bids');
@@ -36,6 +42,23 @@ export const BidService = {
 
     // Update product price and bid count
     await productModel.updatePriceAndBidCount(product_id, bid_amount);
+
+    // Auto-extend auction if bid placed within the final 5 minutes -> add 10 minutes
+    try {
+      const now = new Date();
+      const endsAt = new Date(product.ends_at);
+      const thresholdMinutes = 5; // fixed 5 minutes threshold
+      const extensionMinutes = 10; // fixed 10 minutes extension
+
+      const timeLeftMs = endsAt.getTime() - now.getTime();
+      if (timeLeftMs <= thresholdMinutes * 60 * 1000) {
+        const newEndsAt = new Date(endsAt.getTime() + extensionMinutes * 60 * 1000);
+        await productModel.updateEndsAt(product_id, newEndsAt);
+      }
+    } catch (e) {
+      // don't block bid creation if extension fails; log or ignore
+      console.warn('Failed to auto-extend auction:', e);
+    }
 
     return bid;
   },

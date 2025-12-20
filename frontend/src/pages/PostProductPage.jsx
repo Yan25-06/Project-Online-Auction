@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ProductCard from "../components/product/ProductCard"; 
 import { CategoryService, ProductService } from '../services/backendService';
+import { useToast } from '../components/common/Toast';
 import { Editor } from '@tinymce/tinymce-react';
 import Header from '../components/common/Header';
 
@@ -14,6 +15,7 @@ const PostProductPage = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   const user = JSON.parse(localStorage.getItem('user'));
   // State quản lý form
@@ -56,7 +58,7 @@ const PostProductPage = () => {
     
     // Giới hạn tối đa 10 ảnh
     if (files.length + selectedFiles.length > 10) {
-      alert("Bạn chỉ được đăng tối đa 10 ảnh.");
+      toast.show("Bạn chỉ được đăng tối đa 10 ảnh.", { type: 'error' });
       return;
     }
 
@@ -120,7 +122,7 @@ const PostProductPage = () => {
 
       await ProductService.create(data);
 
-      alert('Đăng sản phẩm thành công!');
+      toast.show('Đăng sản phẩm thành công!', { type: 'success' });
       navigate('/seller/products');
 
     } catch (err) {

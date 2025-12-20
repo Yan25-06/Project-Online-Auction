@@ -3,18 +3,33 @@ import { User, Gavel, Heart, LogOut, Plus } from "lucide-react"; // Thêm icon L
 import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useWatchList } from "../../context/WatchListContext";
+import { UserService } from '../../services/backendService';
 
 const Header = () => {
   const { watchList } = useWatchList();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+
+        // try to load backend profile (contains role)
+        (async () => {
+          try {
+            const backendUser = await UserService.getById(parsed.id);
+            setProfile(backendUser || null);
+          } catch (e) {
+            console.debug('Failed to fetch backend user profile', e);
+            setProfile(null);
+          }
+        })();
+
       } catch (error) {
         console.error("Lỗi đọc dữ liệu user", error);
       }
@@ -55,9 +70,12 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center gap-4">
-            <Link to="/post-product" className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 shadow-md flex items-center gap-2 transition-all hover:shadow-lg">
-               <Plus size={18} /> Đăng bán
-            </Link>
+            {/* Show post button only when backend role is seller or user metadata role says seller */}
+            {((profile && profile.role === 'seller') || (user && user.user_metadata && user.user_metadata.role === 'seller')) && (
+              <Link to="/post-product" className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 shadow-md flex items-center gap-2 transition-all hover:shadow-lg">
+                <Plus size={18} /> Đăng bán
+              </Link>
+            )}
             {/* Watchlist */}
             {watchList.length > 0 && (
               <div className="flex items-center gap-1 text-sm font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
