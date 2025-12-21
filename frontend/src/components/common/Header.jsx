@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useWatchList } from "../../context/WatchListContext";
 import { useAuth } from "../../context/AuthContext";
+import { UserService } from "../../services/backendService";
 
 const Header = () => {
   const { watchList } = useWatchList();
@@ -13,24 +14,22 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      try {
-        // try to load backend profile (contains role)
-        (async () => {
-          try {
-            const backendUser = await UserService.getById(parsed.id);
-            setProfile(backendUser || null);
-          } catch (e) {
-            console.debug('Failed to fetch backend user profile', e);
-            setProfile(null);
-          }
-        })();
-
-      } catch (error) {
-        console.error("Lỗi đọc dữ liệu user", error);
+    const fetchUser = async () => {
+      if (user) {
+        try {
+          const backendUser = await UserService.getById(user.id);
+          console.log(backendUser);
+          setProfile(backendUser || null);
+        } catch (e) {
+          console.log('Failed to fetch backend user profile', e);
+          setProfile(null);
+        }
       }
     }
-  }, []);
+    
+    fetchUser();
+
+  }, [user]);
 
   // 2. Hàm xử lý Đăng xuất
   const handleLogout = () => {

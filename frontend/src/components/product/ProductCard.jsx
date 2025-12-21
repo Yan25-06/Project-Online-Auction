@@ -10,8 +10,6 @@ const ProductCard = ({ product }) => {
   const isNew = isProductNew(product.created_at); 
   const { watchList, toggleWatchList } = useWatchList();
   const isFavorite = watchList.includes(product);
-  console.log(watchList);
-  console.log(isFavorite);
   const [categoryName, setCategoryName] = useState('Đang tải...');
   const [topBidderName, setTopBidderName] = useState('Chưa có');
 
