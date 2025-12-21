@@ -2,6 +2,7 @@ import { Mail, Lock, User, MapPin, UserPlus, RefreshCw, ShieldCheck } from 'luci
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthService } from '../services/authService'; 
+import { useToast } from '../components/common/Toast';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const RegisterPage = () => {
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
 
   const handleInputChange = (e) => {
@@ -79,7 +81,7 @@ const RegisterPage = () => {
             console.error("Lỗi cập nhật thông tin:", updateError);
         }
 
-        alert('Đăng ký tài khoản thành công!');
+        toast.show('Đăng ký tài khoản thành công!', { type: 'success' });
         navigate('/login');
         return;
       }

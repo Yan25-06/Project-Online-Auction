@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { ProductService } from "../services/product.service.js";
+import { uploadToStorage } from "../services/storage.service.js";
 
 
 export const ProductController = {
@@ -85,8 +86,15 @@ export const ProductController = {
     },
 
     create: async (req: Request, res: Response) => {
+        console.log("File nhận được:", (req as any).file); 
+        console.log("Body nhận được:", req.body);
         try {
-            const productData = req.body;
+            const file = (req as any).file; 
+            const imageUrl = await uploadToStorage(file);
+            const productData = { 
+                ...req.body,
+                main_image_url: imageUrl,
+            }
             const created = await ProductService.create(productData);
             return res.status(201).json(created);
         } catch (err: any) {

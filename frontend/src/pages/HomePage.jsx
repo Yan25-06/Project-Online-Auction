@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import ProductCard from "../components/product/ProductCard";
 import SectionTitle from "../components/product/SectionTitle";
-import Header from "../components/common/Header";
 
 import { ProductService, CategoryService } from "../services/backendService";
 
@@ -102,7 +101,6 @@ const HomePage = () => {
 
 	return (
 		<>
-			<Header />
 			<div className="container mx-auto px-4 py-8 space-y-12">
 				{/* --- SECTION 1: DANH MỤC & BANNER --- */}
 				<section className="grid grid-cols-1 md:grid-cols-4 gap-6">

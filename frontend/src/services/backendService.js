@@ -5,9 +5,9 @@ import { supabase } from '../config/supabase';
 const apiClient = axios.create({
   baseURL: 'http://localhost:3000/api', // Your Express Backend URL
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // headers: {
+  //   'Content-Type': 'application/json',
+  // },
 });
 
 // Optional: Add interceptors (e.g., for attaching tokens)
@@ -156,6 +156,11 @@ export const BidService = {
 
   getHighestBid: async (productId) => {
     const response = await apiClient.get(`/bids/product/${productId}/highest`);
+    return response.data;
+  },
+
+  getHistory: async (productId, page = 1, limit = 50) => {
+    const response = await apiClient.get(`/bids/product/${productId}/history`, { params: { page, limit } });
     return response.data;
   },
 

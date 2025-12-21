@@ -6,6 +6,7 @@ const bidRouter = Router();
 
 bidRouter.post('/', requireAuth, BidController.create);
 bidRouter.get('/product/:productId', BidController.findByProduct);
+bidRouter.get('/product/:productId/history', BidController.getHistory);
 bidRouter.get('/product/:productId/highest', BidController.getHighestBid);
 bidRouter.get('/bidder/:bidderId', BidController.findByBidder);
 bidRouter.get('/winning/:bidderId', BidController.getWinningBids);

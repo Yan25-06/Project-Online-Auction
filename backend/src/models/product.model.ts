@@ -23,6 +23,25 @@ export const productModel = {
     return data;
   },
 
+  // Hàm xử lý upload file lên Storage
+  async uploadImage(file: any) {
+    const fileName = `product_${Date.now()}_${file.originalname}`;
+
+    const { data, error } = await supabase.storage
+      .from('product_images') 
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage
+      .from('product_images')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  },
   // Create product
   async create(productData: CreateProductInput): Promise<Product> {
     const { data, error } = await supabase
@@ -200,13 +219,37 @@ export const productModel = {
     return data;
   },
 
+  // Update product ends_at (used for auto-extension)
+  async updateEndsAt(id: string, newEndsAt: string | Date): Promise<Product> {
+    const endsAtIso = (newEndsAt instanceof Date) ? newEndsAt.toISOString() : newEndsAt;
+    const { data, error } = await supabase
+      .from('products')
+      .update({ ends_at: endsAtIso, updated_at: new Date() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   // Update current price and bid count
   async updatePriceAndBidCount(id: string, newPrice: number): Promise<Product> {
+    // 1. Lấy bid_count hiện tại
+    const { data: currentProduct } = await supabase
+      .from('products')
+      .select('bid_count')
+      .eq('id', id)
+      .single();
+
+    const newBidCount = (currentProduct?.bid_count || 0) + 1;
+
+    // 2. Cập nhật với con số cụ thể
     const { data, error } = await supabase
       .from('products')
       .update({ 
         current_price: newPrice, 
-        bid_count: supabase.rpc('increment', { x: 1 }),
+        bid_count: newBidCount, // Truyền con số cụ thể vào đây
         updated_at: new Date() 
       })
       .eq('id', id)
@@ -219,9 +262,20 @@ export const productModel = {
 
   // Increment view count
   async incrementViewCount(id: string): Promise<void> {
+    // Read current view_count then update with incremented value
+    const { data: current, error: fetchErr } = await supabase
+      .from('products')
+      .select('view_count')
+      .eq('id', id)
+      .single();
+
+    if (fetchErr) throw fetchErr;
+    
+    const newViewCount = (current?.view_count ?? 0) + 1;
+
     const { error } = await supabase
       .from('products')
-      .update({ view_count: supabase.rpc('increment', { x: 1 }) })
+      .update({ view_count: newViewCount })
       .eq('id', id);
 
     if (error) throw error;

@@ -22,6 +22,17 @@ export const BidController = {
     }
   },
 
+  // Get masked bid history for product
+  getHistory: async (req: Request, res: Response) => {
+    try {
+      const productId = req.params.productId as string;
+      const data = await BidService.getHistory(productId);
+      return res.status(200).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
   getHighestBid: async (req: Request, res: Response) => {
     try {
       const productId = req.params.productId as string;

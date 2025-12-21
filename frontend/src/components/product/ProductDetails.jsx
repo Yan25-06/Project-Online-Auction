@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, Clock, ShieldCheck, Phone, ImageIcon, Calendar, UserCheck, Star, TrendingUp, MessageCircle, Heart, AlertCircle } from 'lucide-react';
+import { ChevronRight, Clock, ShieldCheck, Phone, ImageIcon, Calendar, UserCheck, Star, TrendingUp, MessageCircle, Heart, AlertCircle, Home } from 'lucide-react';
 // 1. Import thêm maskName
 import { formatCurrency, formatPostDate, formatTimeRelative, maskName } from '../../utils/formatters';
 import { useWatchList } from '../../context/WatchListContext';
@@ -8,6 +8,7 @@ import SectionTitle from './SectionTitle';
 import ProductCard from './ProductCard';
 // 2. Import thêm BidService, UserService
 import { ProductService, QuestionService, BidService, UserService } from '../../services/backendService';
+import BidBox from './BidBox';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -18,9 +19,9 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState('');
   const [relatedProducts, setRelatedProducts] = useState([]);
-  
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState('Chưa có'); 
+  
 
   const { watchList, toggleWatchList } = useWatchList();
   const isFavorite = product ? watchList.includes(product.id) : false;
@@ -72,10 +73,10 @@ const ProductDetails = () => {
       }
 
       try {
-        const highestBid = await BidService.getHighestBid(product.id);
+        const hb = await BidService.getHighestBid(product.id);
         // Kiểm tra kỹ cấu trúc trả về
-        if (highestBid && highestBid.bidder_id) {
-          const user = await UserService.getById(highestBid.bidder_id);
+        if (hb && hb.bidder_id) {
+          const user = await UserService.getById(hb.bidder_id);
           const name = user.full_name || 'Người dùng';
           // Mask tên để bảo mật
           setTopBidderName(maskName(name));
@@ -88,6 +89,8 @@ const ProductDetails = () => {
 
     fetchTopBidder();
   }, [product]); // Chạy lại khi product thay đổi
+
+  
 
   // --- FETCH RELATED PRODUCTS ---
   useEffect(() => {
@@ -147,7 +150,9 @@ const ProductDetails = () => {
     <div className="container mx-auto px-4 py-8 animate-fadeIn bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <Link to="/" className="hover:text-blue-600">Trang chủ</Link>
+        <Link to="/" className="flex items-center hover:text-blue-600">
+          <Home size={16} className="mr-1" />Trang chủ
+        </Link>
         <ChevronRight size={14} />
         {product.category_id && (
            <>
@@ -242,15 +247,8 @@ const ProductDetails = () => {
              </div>
            </div>
 
-           <div className="grid grid-cols-2 gap-4">
-             <button className="col-span-1 bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg cursor-pointer">
-               Đấu giá ngay
-             </button>
-             {product.buy_now_price && (
-               <button className="col-span-1 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg cursor-pointer">
-                 Mua ngay
-               </button>
-             )}
+           <div>
+             <BidBox product={product} onTopBidderChange={(masked) => setTopBidderName(masked)} />
            </div>
 
            <div className="flex items-center gap-6 text-sm text-gray-600 pt-2">
@@ -264,10 +262,13 @@ const ProductDetails = () => {
         <div className="lg:col-span-2 space-y-8">
           <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Mô tả chi tiết sản phẩm</h3>
-            <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {product.description || 'Người bán chưa cung cấp mô tả chi tiết cho sản phẩm này.'}
-            </div>
+            <div 
+                className="prose max-w-none text-gray-700"
+                dangerouslySetInnerHTML={{ __html: product.description }} 
+            />
           </section>
+
+          {/* Bid history moved into BidBox component */}
 
           <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
