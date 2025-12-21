@@ -13,6 +13,6 @@ userRouter.post('/:id/request-upgrade', requireAuth, requireRole('bidder'), User
 userRouter.post('/:id/approve-upgrade', requireAuth, requireRole('admin'), UserController.approveUpgrade);
 userRouter.post('/:id/reject-upgrade', requireAuth, requireRole('admin'), UserController.rejectUpgrade);
 userRouter.get('/:id', UserController.getById);
-userRouter.put('/:id', UserController.update);
+userRouter.put('/:id', requireAuth, UserController.update);
 
 export { userRouter };

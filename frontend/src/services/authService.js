@@ -87,8 +87,17 @@ export const AuthService = {
   },
 
   updateProfile: async (userData) => {
-    const { data, error } = await supabase.auth.updateUser(userData);
+    const { data, error } = await supabase.auth.updateUser({
+      data: userData
+    });
     if (error) throw error;
+    if (data?.user?.id) {
+        try {
+            await UserService.update(data.user.id, userData);
+        } catch (backendError) {
+            console.error("Lỗi lưu DB backend:", backendError);
+        }
+    }
     return data.user;
   },
 

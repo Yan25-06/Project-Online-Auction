@@ -3,6 +3,7 @@ import { UserService, WatchlistService, RatingService } from '../services/backen
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/product/ProductCard';
 import { useWatchList } from '../context/WatchListContext';
+import { AuthService } from '../services/authService';
 // Icon đơn giản (dùng text hoặc icon library tùy bạn)
 const IconUser = () => <span>👤</span>;
 const IconLock = () => <span>🔒</span>;
@@ -15,23 +16,23 @@ const UserPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const { user } = useAuth();
   const { watchList } = useWatchList();
-  console.log(watchList)
 
-  useEffect(() => {
-    const fetchUser = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-          console.log(JSON.parse(storedUser))
-        } catch (error) {
-          console.error("Lỗi đọc dữ liệu user", error);
-        }
-      }
-    }
+  // useEffect(() => {
+  //   const fetchUser = () => {
+  //     if (user) {
+  //       console.log(user);
+  //       setUserData({ 
+  //         full_name: user.user_metadata.full_name || '', 
+  //         email: user.email || '',
+  //         address: user.user_metadata.address || '',
+  //       });
+  //     }
 
-    fetchUser();
-  }, []);
+  //     console.log(userData);
+  //   }
+
+  //   fetchUser();
+  // }, [user]);
 
   useEffect(() => {
     // Hooks
@@ -64,10 +65,9 @@ const UserPage = () => {
         <div className="w-full basis-1/4 md:w-1/4 bg-gray-50 border-r border-gray-200 p-6">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-blue-500 rounded-full mx-auto flex items-center justify-center text-white text-3xl font-bold mb-2">
-              D
+              {user?.user_metadata.full_name.charAt(0).toUpperCase() || "U"}
             </div>
             <h2 className="text-xl font-bold text-gray-800">{user?.user_metadata.full_name || user?.email}</h2>
-            <p className="text-sm text-gray-500">Thành viên từ 2023</p>
           </div>
 
           <nav className="space-y-2">
@@ -92,40 +92,130 @@ const UserPage = () => {
 // --- CÁC SUB-COMPONENTS (Giao diện chi tiết) ---
 
 // 1. Đổi thông tin & Mật khẩu
-const ProfileSettings = () => (
-  <div className="space-y-8 flex flex-col items-center">
-    <div>
-      <h3 className="text-2xl font-bold mb-4 border-b pb-2">Thông tin cá nhân</h3>
-      <div className="grid grid-cols-1 gap-4 max-w-md">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
-          <input type="text" className="mt-1 block w-full border border-gray-300 rounded-md p-2" defaultValue="Nguyễn Văn A" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" className="mt-1 block w-full border border-gray-300 rounded-md p-2" defaultValue="user@example.com" />
-        </div>
-      </div>
-    </div>
+const ProfileSettings = () => {
+  const [userData, setUserData] = useState({ full_name: '', email: '', address: ''});
+  const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const { user } = useAuth();
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserData({
+      ...userData,
+      [name]: value
+    })
+  }
 
-    <div>
-      <h3 className="text-2xl font-bold mb-4 border-b pb-2">Đổi mật khẩu</h3>
-      <div className="grid grid-cols-1 gap-4 max-w-md">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Mật khẩu cũ <span className="text-red-500">*</span></label>
-          <input type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" placeholder="••••••" />
+  const handleInfoSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const updatedUser = await AuthService.updateProfile(userData);
+      console.log('Người dùng đã cập nhật', updatedUser);
+    } catch (err) {
+      console.log(err);
+    }
+  } 
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      alert("Mật khẩu phải ít nhất 6 ký tự");
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      alert("Mật khẩu mới và mật khẩu xác nhận không khớp nhau");
+      return;
+    }
+    
+    try {
+      const thisUser = await AuthService.login(user.email, password);
+      const updatedUser = await AuthService.updatePassword(newPassword);
+      console.log('Người dùng đã cập nhật', updatedUser);
+    }
+    catch (err) {
+      console.error(err);
+      if (err.message == "Invalid login credentials")
+        alert("Sai mật khẩu cũ")
+    }
+  }
+
+  return (
+    <div className="space-y-8 flex flex-col items-center">
+      <form>
+        <h3 className="text-2xl font-bold mb-4 border-b pb-2">Thông tin cá nhân</h3>
+        <div className="grid grid-cols-1 gap-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
+            <input 
+              name="full_name"
+              type="text" className="mt-1 block w-full border border-gray-300 rounded-md p-2" 
+              value={userData.full_name} 
+              onChange={(e) => handleInputChange(e)} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input 
+              name="email"
+              type="email" className="mt-1 block w-full border border-gray-300 rounded-md p-2" 
+              value={userData.email} 
+              onChange={(e) => handleInputChange(e)} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+            <input 
+              name="address"
+              type="text" className="mt-1 block w-full border border-gray-300 rounded-md p-2" 
+              value={userData.address}
+              onChange={(e) => handleInputChange(e)}
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
-          <input type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" placeholder="••••••" />
-        </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full mt-2">
-          Lưu thay đổi
+        <button 
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full mt-2"
+          onClick={handleInfoSubmit}
+        >
+            Lưu thay đổi
         </button>
+      </form>
+
+      <div>
+        <h3 className="text-2xl font-bold mb-4 border-b pb-2">Đổi mật khẩu</h3>
+        <div className="grid grid-cols-1 gap-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Mật khẩu cũ <span className="text-red-500">*</span></label>
+            <input 
+              name="password"
+              type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={password} 
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
+            <input 
+              name="newPassword"
+              type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={newPassword} 
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+            <input 
+              name="confirmPassword"
+              type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={confirmPassword} 
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full mt-2" onClick={(e) => handlePasswordSubmit(e)}>
+            Đổi mật khẩu
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 2. Xem điểm đánh giá & Nhận xét
 const MyRatings = () => (

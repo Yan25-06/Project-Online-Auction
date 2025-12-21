@@ -73,7 +73,10 @@ const Header = () => {
                 </div>
 
                 {/* Avatar (Giả lập) */}
-                <div className="h-9 w-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                <div 
+                  className="h-9 w-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold cursor-pointer"
+                  onClick={() => navigate('/user')}
+                >
                   {/* Lấy chữ cái đầu của tên */}
                   {(user.user_metadata.full_name || "U").charAt(0).toUpperCase()}
                 </div>

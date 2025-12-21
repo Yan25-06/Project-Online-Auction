@@ -26,11 +26,13 @@ export const AuthProvider = ({ children }) => {
 
         // 2. Lắng nghe sự kiện Login/Logout/Refresh Token tự động
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
+            (event, session) => {
                 // console.log("Auth event:", _event, session); // Bật lên nếu muốn debug
-                setSession(session);
-                setUser(session?.user ?? null);
-                setLoading(false);
+                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+                    setSession(session);
+                    setUser(session?.user ?? null);
+                    setLoading(false);
+                }
             }
         );
 
