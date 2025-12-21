@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { UserService, WatchlistService, RatingService } from '../services/backendService';
+import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { Home, ChevronRight } from 'lucide-react';
+import { UserService, WatchlistService, RatingService, BidService } from '../services/backendService';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/product/ProductCard';
 import { useWatchList } from '../context/WatchListContext';
 import { AuthService } from '../services/authService';
+import { formatCurrency } from '../utils/formatters';
 // Icon đơn giản (dùng text hoặc icon library tùy bạn)
 const IconUser = () => <span>👤</span>;
 const IconLock = () => <span>🔒</span>;
@@ -16,23 +19,8 @@ const UserPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const { user } = useAuth();
   const { watchList } = useWatchList();
-
-  // useEffect(() => {
-  //   const fetchUser = () => {
-  //     if (user) {
-  //       console.log(user);
-  //       setUserData({ 
-  //         full_name: user.user_metadata.full_name || '', 
-  //         email: user.email || '',
-  //         address: user.user_metadata.address || '',
-  //       });
-  //     }
-
-  //     console.log(userData);
-  //   }
-
-  //   fetchUser();
-  // }, [user]);
+  const [title, setTitle] = useState('Trang cá nhân');
+  
 
   useEffect(() => {
     // Hooks
@@ -59,6 +47,17 @@ const UserPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 font-sans">
+      {/* Breadcrumb nhỏ */}
+      <div className="flex items-center text-sm text-gray-500 mb-4">
+        <Link to="/" className="flex items-center hover:text-blue-600">
+          <Home size={16} className="mr-1" /> Trang chủ
+        </Link>
+        <ChevronRight size={16} className="mx-2" />
+        <span className="text-gray-900 font-medium truncate max-w-[200px]">
+          {title}
+        </span>
+      </div>
+
       <div className="max-w-screen mx-auto bg-white rounded-xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
         {/* SIDEBAR MENU */}
@@ -98,6 +97,22 @@ const ProfileSettings = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchUser = () => {
+      if (user) {
+        console.log(user);
+        setUserData({ 
+          full_name: user.user_metadata.full_name || '', 
+          email: user.email || '',
+          address: user.user_metadata.address || '',
+        });
+      }
+    }
+
+    fetchUser();
+  }, [user]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData({
@@ -127,7 +142,7 @@ const ProfileSettings = () => {
       alert("Mật khẩu mới và mật khẩu xác nhận không khớp nhau");
       return;
     }
-    
+
     try {
       const thisUser = await AuthService.login(user.email, password);
       const updatedUser = await AuthService.updatePassword(newPassword);
@@ -285,85 +300,134 @@ const FavoriteProducts = ({ watchList=[] }) => {
 };
 
 // 4. Đang đấu giá
-const BiddingProducts = () => (
-  <div>
-    <h3 className="text-2xl font-bold mb-6 border-b pb-2">Đang tham gia đấu giá</h3>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-100 border-b">
-            <th className="p-3">Sản phẩm</th>
-            <th className="p-3">Giá hiện tại</th>
-            <th className="p-3">Giá bạn đặt</th>
-            <th className="p-3">Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-b">
-            <td className="p-3 font-medium">Bàn phím cơ Keychron</td>
-            <td className="p-3">1.200.000 đ</td>
-            <td className="p-3 text-blue-600 font-bold">1.200.000 đ</td>
-            <td className="p-3"><span className="text-green-600 bg-green-100 px-2 py-1 rounded text-xs">Đang dẫn đầu</span></td>
-          </tr>
-          <tr className="border-b">
-            <td className="p-3 font-medium">Đồng hồ Casio</td>
-            <td className="p-3">550.000 đ</td>
-            <td className="p-3 text-gray-500">400.000 đ</td>
-            <td className="p-3"><span className="text-red-600 bg-red-100 px-2 py-1 rounded text-xs">Bị vượt mặt</span></td>
-          </tr>
-        </tbody>
-      </table>
+const BiddingProducts = () => {
+  const { user } = useAuth();
+  const [bids, setBids] = useState([]);
+
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        const res = await BidService.findByBidder(user.id);
+        console.log(res);
+        setBids(res.data);
+      }
+      catch (err) {
+        console.log('Error fetching bids', err.message);
+      }
+    }
+
+    fetchBids();
+
+  }, [user]);
+
+  return (
+    <div>
+      <h3 className="text-2xl font-bold mb-6 border-b pb-2">Đang tham gia đấu giá</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border-b">
+              <th className="p-3">Sản phẩm</th>
+              <th className="p-3">Giá hiện tại</th>
+              <th className="p-3">Giá bạn đặt</th>
+              <th className="p-3">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bids.length === 0 ? (
+              <p className="text-gray-500 italic">Bạn chưa tham gia đâu giá sản phẩm nào.</p>
+            ) : (
+              <>
+                {bids.map((bid) => (
+                  <tr key={bid.id} className="border-b">
+                    <td className="p-3 font-medium">{bid.product.name}</td>
+                    <td className="p-3">{formatCurrency(bid.product.current_price)}</td>
+                    <td className="p-3 text-blue-600 font-bold">{formatCurrency(bid.bid_amount)}</td>
+                    <td className="p-3">
+                      {bid.bid_amount == bid.product.current_price ? (
+                        <span className="text-green-600 bg-green-100 px-2 py-1 rounded text-xs">Đang dẫn đầu</span>
+                      ) : (
+                        <span className="text-red-600 bg-red-100 px-2 py-1 rounded text-xs">Bị vượt mặt</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 5. Đã thắng & Đánh giá (QUAN TRỌNG)
-const WonProducts = () => (
-  <div>
-    <h3 className="text-2xl font-bold mb-6 border-b pb-2">Sản phẩm đã thắng</h3>
-    <div className="space-y-6">
-      
-      {/* Item đã thắng */}
-      <div className="border rounded-lg p-4">
-        <div className="flex justify-between mb-4">
-          <div className="flex gap-4">
-            <div className="w-24 h-24 bg-gray-200 rounded"></div>
-            <div>
-              <h4 className="font-bold text-lg">Macbook Air M1 2020</h4>
-              <p className="text-sm text-gray-500">Người bán: <span className="text-blue-600 cursor-pointer">AppleLover</span></p>
-              <p className="text-green-600 font-bold text-xl mt-1">Giá thắng: 18.500.000 đ</p>
+const WonProducts = () => {
+  const { user } = useAuth();
+  const [bids, setBids] = useState([]);
+
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        const res = await BidService.getWinningBids(user.id);
+        console.log(res);
+        setBids(res);
+      }
+      catch (err) {
+        console.log('Error fetching bids', err.message);
+      }
+    }
+
+    fetchBids();
+
+  }, [user]);
+  return (
+    <div>
+      <h3 className="text-2xl font-bold mb-6 border-b pb-2">Sản phẩm đã thắng</h3>
+      <div className="space-y-6">
+        
+        {/* Item đã thắng */}
+        <div className="border rounded-lg p-4">
+          <div className="flex justify-between mb-4">
+            <div className="flex gap-4">
+              <div className="w-24 h-24 bg-gray-200 rounded"></div>
+              <div>
+                <h4 className="font-bold text-lg">Macbook Air M1 2020</h4>
+                <p className="text-sm text-gray-500">Người bán: <span className="text-blue-600 cursor-pointer">AppleLover</span></p>
+                <p className="text-green-600 font-bold text-xl mt-1">Giá thắng: 18.500.000 đ</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Chờ thanh toán</span>
             </div>
           </div>
-          <div className="text-right">
-             <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Chờ thanh toán</span>
+
+          {/* Form đánh giá người bán (Theo yêu cầu hình ảnh) */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
+            <p className="font-bold text-sm mb-2 text-gray-700">Đánh giá người bán:</p>
+            <div className="flex gap-2 mb-3">
+              <button className="flex items-center gap-1 bg-white border border-gray-300 px-3 py-1 rounded hover:bg-green-50 hover:border-green-500 hover:text-green-600 transition">
+                👍 Hài lòng (+1)
+              </button>
+              <button className="flex items-center gap-1 bg-white border border-gray-300 px-3 py-1 rounded hover:bg-red-50 hover:border-red-500 hover:text-red-600 transition">
+                👎 Không hài lòng (-1)
+              </button>
+            </div>
+            <textarea 
+              className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-blue-500" 
+              placeholder="Nhập nhận xét của bạn về người bán này (ví dụ: Giao hàng nhanh, đóng gói kỹ...)"
+              rows="2"
+            ></textarea>
+            <div className="text-right mt-2">
+              <button className="bg-gray-800 text-white text-sm px-4 py-2 rounded hover:bg-black">Gửi đánh giá</button>
+            </div>
           </div>
         </div>
 
-        {/* Form đánh giá người bán (Theo yêu cầu hình ảnh) */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
-          <p className="font-bold text-sm mb-2 text-gray-700">Đánh giá người bán:</p>
-          <div className="flex gap-2 mb-3">
-             <button className="flex items-center gap-1 bg-white border border-gray-300 px-3 py-1 rounded hover:bg-green-50 hover:border-green-500 hover:text-green-600 transition">
-               👍 Hài lòng (+1)
-             </button>
-             <button className="flex items-center gap-1 bg-white border border-gray-300 px-3 py-1 rounded hover:bg-red-50 hover:border-red-500 hover:text-red-600 transition">
-               👎 Không hài lòng (-1)
-             </button>
-          </div>
-          <textarea 
-            className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-blue-500" 
-            placeholder="Nhập nhận xét của bạn về người bán này (ví dụ: Giao hàng nhanh, đóng gói kỹ...)"
-            rows="2"
-          ></textarea>
-          <div className="text-right mt-2">
-            <button className="bg-gray-800 text-white text-sm px-4 py-2 rounded hover:bg-black">Gửi đánh giá</button>
-          </div>
-        </div>
       </div>
-
     </div>
-  </div>
-);
+  );
+};
 
 // Helper Button Component
 const TabButton = ({ id, label, icon, activeTab, setActiveTab }) => (

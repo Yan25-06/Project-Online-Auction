@@ -19,7 +19,6 @@ export const WatchListProvider = ({ children }) => {
           // Gọi API lấy danh sách yêu thích của user
           // Giả sử API trả về mảng object: [{ product_id: 1, ... }, { product_id: 5, ... }]
           const res = await WatchlistService.findByUser(user.id);
-          console.log(res.data)
           const products = res.data.map((item) => item.product); 
           setWatchList(products);
         } catch (err) {

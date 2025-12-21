@@ -9,18 +9,28 @@ const Header = () => {
   const { watchList } = useWatchList();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // useEffect(() => {
-  //   const storedUser = localStorage.getItem("user");
-  //   if (storedUser) {
-  //     try {
-  //       setUser(JSON.parse(storedUser));
-  //     } catch (error) {
-  //       console.error("Lỗi đọc dữ liệu user", error);
-  //     }
-  //   }
-  // }, []);
+  useEffect(() => {
+    if (user) {
+      try {
+        // try to load backend profile (contains role)
+        (async () => {
+          try {
+            const backendUser = await UserService.getById(parsed.id);
+            setProfile(backendUser || null);
+          } catch (e) {
+            console.debug('Failed to fetch backend user profile', e);
+            setProfile(null);
+          }
+        })();
+
+      } catch (error) {
+        console.error("Lỗi đọc dữ liệu user", error);
+      }
+    }
+  }, []);
 
   // 2. Hàm xử lý Đăng xuất
   const handleLogout = () => {

@@ -170,7 +170,7 @@ export const BidService = {
   },
 
   getWinningBids: async (bidderId, page = 1, limit = 20) => {
-    const response = await apiClient.get(`/bids/bidder/${bidderId}/winning`, { params: { page, limit } });
+    const response = await apiClient.get(`/bids/winning/${bidderId}`, { params: { page, limit } });
     return response.data;
   },
 
