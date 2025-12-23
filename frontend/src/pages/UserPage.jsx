@@ -200,9 +200,9 @@ const ProfileSettings = () => {
         <h3 className="text-2xl font-bold mb-4 border-b pb-2">Đổi mật khẩu</h3>
         <div className="grid grid-cols-1 gap-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mật khẩu cũ <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700">Mật khẩu cũ</label>
             <input 
-              name="password"
+              name="password" required
               type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={password} 
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -210,7 +210,7 @@ const ProfileSettings = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
             <input 
-              name="newPassword"
+              name="newPassword" required
               type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={newPassword} 
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -218,7 +218,7 @@ const ProfileSettings = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
             <input 
-              name="confirmPassword"
+              name="confirmPassword" required
               type="password" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={confirmPassword} 
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
