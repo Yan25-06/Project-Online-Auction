@@ -17,6 +17,7 @@ const ProductListingPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("Tất cả sản phẩm"); // Tiêu đề trang linh hoạt
+  const [parentCategory, setParentCategory] = useState(null);
 
   // State quản lý bộ lọc & phân trang
   const [sort, setSort] = useState("ends_soon"); // ends_soon, price_asc, price_desc, new
@@ -36,6 +37,18 @@ const ProductListingPage = () => {
           const cat = await CategoryService.getById(categoryId);
           // API trả về object category hoặc null
           setTitle(cat?.name || cat?.category?.name || "Danh mục");
+          // Try to fetch parent category if available
+          const parentId = cat?.parent_id || cat?.parent?.id;
+          if (parentId) {
+            try {
+              const parent = await CategoryService.getById(parentId);
+              setParentCategory(parent || null);
+            } catch (err) {
+              setParentCategory(null);
+            }
+          } else {
+            setParentCategory(null);
+          }
         } catch (error) {
           setTitle("Danh mục");
         }
@@ -115,6 +128,14 @@ const ProductListingPage = () => {
               <Link to="/" className="flex items-center hover:text-blue-600">
                 <Home size={16} className="mr-1" /> Trang chủ
               </Link>
+              {parentCategory && (
+                <>
+                  <ChevronRight size={16} className="mx-2" />
+                  <Link to={`/categories/${parentCategory.id}`} className="text-gray-700 hover:text-blue-600 mr-2">
+                    {parentCategory.name}
+                  </Link>
+                </>
+              )}
               <ChevronRight size={16} className="mx-2" />
               <span className="text-gray-900 font-medium truncate max-w-[200px]">
                 {title}

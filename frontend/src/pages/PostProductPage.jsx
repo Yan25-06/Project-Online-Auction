@@ -38,7 +38,32 @@ const PostProductPage = () => {
     const fetchCategories = async () => {
       try {
         const res = await CategoryService.getAll();
-        setCategories(res.data || res || []);
+        const raw = res?.data || res || [];
+
+        // Normalize and pick only leaf categories (categories that are not parents)
+        let leafCategories = [];
+        if (Array.isArray(raw)) {
+          // Case A: nested hierarchy provided (each item may have subcategories array)
+          const looksNested = raw.some(item => item && Array.isArray(item.subcategories));
+          if (looksNested) {
+            const collectLeaves = (nodes) => {
+              let leaves = [];
+              for (const n of nodes) {
+                const subs = n.subcategories || [];
+                if (!subs || subs.length === 0) leaves.push(n);
+                else leaves = leaves.concat(collectLeaves(subs));
+              }
+              return leaves;
+            };
+            leafCategories = collectLeaves(raw);
+          } else {
+            // Case B: flat list returned. Compute which ids appear as parent_id and exclude them.
+            const parentIdSet = new Set(raw.map(item => item.parent_id).filter(Boolean));
+            leafCategories = raw.filter(item => !parentIdSet.has(item.id));
+          }
+        }
+
+        setCategories(leafCategories);
       } catch (err) {
         console.error("Lỗi lấy danh mục:", err);
       }

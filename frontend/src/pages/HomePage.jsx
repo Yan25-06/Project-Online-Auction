@@ -17,6 +17,7 @@ import { ProductService, CategoryService } from "../services/backendService";
 const HomePage = () => {
 	const [loading, setLoading] = useState(true);
 	const [categories, setCategories] = useState([]); // Chứa danh sách phân cấp (Hierarchy)
+	const [expandedParents, setExpandedParents] = useState([]);
 	const [endingSoonProducts, setEndingSoonProducts] = useState([]);
 	const [topBidProducts, setTopBidProducts] = useState([]);
 	const [topPriceProducts, setTopPriceProducts] = useState([]);
@@ -52,40 +53,54 @@ const HomePage = () => {
 	const renderCategories = () => {
 		return categories.map((parent) => {
 			const childCategories = parent.subcategories || [];
-
-			return (
-				<div key={parent.id} className="mb-3">
-					{/* Hiển thị CHA */}
-					<Link to={`/categories/${parent.id}`}>
-						<div className="flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors group">
+				return (
+					<div key={parent.id} className="mb-3">
+						<div
+							role="button"
+							tabIndex={0}
+							onClick={() => {
+								if (expandedParents.includes(parent.id)) {
+									setExpandedParents(prev => prev.filter(x => x !== parent.id));
+								} else {
+									setExpandedParents(prev => [...prev, parent.id]);
+								}
+							}}
+							onKeyDown={(e) => { if (e.key === 'Enter') {
+								if (expandedParents.includes(parent.id)) {
+									setExpandedParents(prev => prev.filter(x => x !== parent.id));
+								} else {
+									setExpandedParents(prev => [...prev, parent.id]);
+								}
+							}}}
+							className="flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors group"
+						>
 							<span className="font-bold text-gray-800 group-hover:text-blue-700">
 								{parent.name}
 							</span>
 							{/* Icon mũi tên */}
 							{childCategories.length > 0 ? (
-								<ChevronDown size={14} className="text-gray-400" />
+								<ChevronDown size={14} className={`text-gray-400 transform transition-transform ${expandedParents.includes(parent.id) ? 'rotate-180' : ''}`} />
 							) : (
 								<ChevronRight size={14} className="text-gray-400" />
 							)}
 						</div>
-					</Link>
 
-					{/* Hiển thị CON (nếu có) */}
-					{childCategories.length > 0 && (
-						<ul className="pl-4 mt-1 space-y-1 border-l-2 border-gray-100 ml-2">
-							{childCategories.map((child) => (
-								<li key={child.id}>
-									<Link to={`/categories/${child.id}`}>
-										<div className="text-sm text-gray-500 hover:text-blue-600 py-1 px-2 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
-											<span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
-											{child.name}
-										</div>
-									</Link>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
+						{/* Hiển thị CON (nếu có và đang mở) */}
+						{childCategories.length > 0 && expandedParents.includes(parent.id) && (
+							<ul className="pl-4 mt-1 space-y-1 border-l-2 border-gray-100 ml-2">
+								{childCategories.map((child) => (
+									<li key={child.id}>
+										<Link to={`/categories/${child.id}`}>
+											<div className="text-sm text-gray-500 hover:text-blue-600 py-1 px-2 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
+												<span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
+												{child.name}
+											</div>
+										</Link>
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
 			);
 		});
 	};
