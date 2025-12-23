@@ -38,13 +38,13 @@ export const WatchListProvider = ({ children }) => {
 
   // Thêm / xóa product ID
   const toggleWatchList = async (product) => {
-    const isExist = watchList.includes(product.id);
+    const isExist = watchList.some(item => item.id === product.id);
 
     // BƯỚC 1: CẬP NHẬT UI NGAY LẬP TỨC (Optimistic Update)
     // Giúp app cảm giác cực nhanh, không cần chờ server phản hồi
     setWatchList((prev) => {
-      if (isExist) return prev.filter((id) => id !== product.id); // Xóa
-      return [...prev, product.id]; // Thêm
+      if (isExist) return prev.filter(item => item.id !== product.id); // Xóa
+      return [...prev, product]; // Thêm
     });
 
     // BƯỚC 2: GỌI API ĐỒNG BỘ (Nếu đã đăng nhập)
@@ -62,8 +62,8 @@ export const WatchListProvider = ({ children }) => {
         
         // BƯỚC 3: ROLLBACK (Nếu API lỗi thì hoàn tác UI về cũ)
         setWatchList((prev) => {
-          if (isExist) return [...prev, product.id]; // Thêm lại cái vừa xóa
-          return prev.filter((id) => id !== product.id); // Xóa cái vừa thêm
+          if (isExist) return [...prev, product]; // Thêm lại cái vừa xóa
+          return prev.filter(item => item.id !== product.id); // Xóa cái vừa thêm
         });
         
         alert("Có lỗi xảy ra, không thể cập nhật danh sách yêu thích!");
