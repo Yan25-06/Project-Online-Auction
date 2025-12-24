@@ -11,6 +11,28 @@ const SMTP_PASS = Deno.env.get('SMTP_PASS')!
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 serve(async (req) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+  // Hàm gửi email (Helper function)
+  async function sendEmailSMTP(to: string, subject: string, html: string) {
+    try {
+      const info = await transporter.sendMail({
+        from: `"Sàn Đấu Giá" <${SMTP_USER}>`, // Tên hiển thị
+        to: to,
+        subject: subject,
+        html: html,
+      });
+      console.log(`SMTP sent to ${to}: ${info.messageId}`);
+    } catch (err) {
+      console.error(`Lỗi gửi SMTP tới ${to}:`, err);
+    }
+  }
+  
   try {
     // 1. Gọi RPC lấy các sản phẩm hết hạn và khóa lại
     const { data: products, error } = await supabase.rpc('get_and_lock_expired_products')
@@ -106,17 +128,3 @@ serve(async (req) => {
   }
 })
 
-// Hàm gửi email (Helper function)
-async function sendEmailSMTP(to: string, subject: string, html: string) {
-  try {
-    const info = await transporter.sendMail({
-      from: `"Sàn Đấu Giá" <${SMTP_USER}>`, // Tên hiển thị
-      to: to,
-      subject: subject,
-      html: html,
-    });
-    console.log(`SMTP sent to ${to}: ${info.messageId}`);
-  } catch (err) {
-    console.error(`Lỗi gửi SMTP tới ${to}:`, err);
-  }
-}
