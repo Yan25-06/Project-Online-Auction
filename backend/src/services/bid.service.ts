@@ -9,7 +9,23 @@ export const BidService = {
 
     // Check if bidder is blocked
     const isBlocked = await bidModel.isBidderBlocked(product_id, bidder_id);
-    if (isBlocked) throw new Error('Bidder is blocked for this product');
+    if (isBlocked) {
+      try {
+        const bidder = await userModel.findById(bidder_id);
+        const productForEmail = await productModel.findById(product_id);
+        if (bidder && bidder.email) {
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+          const productUrl = frontendUrl ? `${frontendUrl}/products/${productForEmail?.id}` : '';
+          const subject = `You are blocked from bidding on "${productForEmail?.name || 'this product'}"`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>You are blocked from placing bids on <a href="${productUrl}">${productForEmail?.name || 'this product'}</a>. If you think this is a mistake, please contact support.</p>`;
+          await EmailService.sendMail(bidder.email, subject, html);
+        }
+      } catch (e) {
+        console.warn('Failed to send blocked notification email:', e);
+      }
+
+      throw new Error('Bidder is blocked for this product');
+    }
 
     // Check product exists and auction active
     const product = await productModel.findById(product_id);
@@ -26,7 +42,22 @@ export const BidService = {
 
     // Check bidder rating / permission to bid
     const canBid = await userModel.canBid(bidder_id);
-    if (!canBid) throw new Error('Your rating is too low to place bids');
+    if (!canBid) {
+      try {
+        const bidder = await userModel.findById(bidder_id);
+        if (bidder && bidder.email) {
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+          const productUrl = frontendUrl ? `${frontendUrl}/products/${product.id}` : '';
+          const subject = `Bid denied for "${product.name}"`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>Your attempt to place a bid of <strong>${bid_amount}</strong> on <a href="${productUrl}">${product.name}</a> was denied because your account's rating is too low to place bids. If you believe this is an error, please contact support.</p>`;
+          await EmailService.sendMail(bidder.email, subject, html);
+        }
+      } catch (e) {
+        console.warn('Failed to send bid denial email:', e);
+      }
+
+      throw new Error('Your rating is too low to place bids');
+    }
 
     // Check bid step/increment and amount greater than current price
     const highest = await bidModel.getHighestBid(product_id);
