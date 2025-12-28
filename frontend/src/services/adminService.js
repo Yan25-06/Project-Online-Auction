@@ -91,9 +91,11 @@ export const AdminService = {
 
   // Product Management
   products: {
-    getAll: async (page = 1, limit = 20) => {
-      const response = await apiClient.get("/products", {
-        params: { page, limit },
+    getAll: async (page = 1, limit = 20, status = null) => {
+      const params = { page, limit };
+      if (status) params.status = status;
+      const response = await apiClient.get("/products/admin/all", {
+        params,
       });
       return response.data;
     },

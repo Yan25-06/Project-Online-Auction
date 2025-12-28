@@ -7,16 +7,21 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("");
   const limit = 20;
 
   useEffect(() => {
     loadProducts();
-  }, [page]);
+  }, [page, statusFilter]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await AdminService.products.getAll(page, limit);
+      const data = await AdminService.products.getAll(
+        page,
+        limit,
+        statusFilter || null
+      );
       setProducts(data.data || []);
       setTotal(data.total || 0);
     } catch (error) {
@@ -78,7 +83,28 @@ export default function AdminProducts() {
             <h1 className="text-3xl font-bold text-gray-900">
               Product Management
             </h1>
-            <div className="text-sm text-gray-600">Total Products: {total}</div>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-600">
+                Total Products: {total}
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="processing">Processing</option>
+                <option value="ended">Ended</option>
+                <option value="sold">Sold</option>
+                <option value="finished">Finished</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
@@ -162,17 +188,26 @@ export default function AdminProducts() {
                             className={`text-xs leading-5 font-semibold rounded-full px-2 py-1 ${
                               product.status === "active"
                                 ? "bg-green-100 text-green-800"
+                                : product.status === "processing"
+                                ? "bg-yellow-100 text-yellow-800"
                                 : product.status === "ended"
                                 ? "bg-gray-100 text-gray-800"
                                 : product.status === "sold"
                                 ? "bg-blue-100 text-blue-800"
+                                : product.status === "finished"
+                                ? "bg-indigo-100 text-indigo-800"
+                                : product.status === "closed"
+                                ? "bg-purple-100 text-purple-800"
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
                             <option value="active">Active</option>
+                            <option value="processing">Processing</option>
                             <option value="ended">Ended</option>
                             <option value="sold">Sold</option>
+                            <option value="finished">Finished</option>
                             <option value="cancelled">Cancelled</option>
+                            <option value="closed">Closed</option>
                           </select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
