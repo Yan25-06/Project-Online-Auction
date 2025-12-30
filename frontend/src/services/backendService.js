@@ -362,7 +362,7 @@ export const BlockedBidderService = {
   },
 
   isBlocked: async (productId, bidderId) => {
-    const response = await apiClient.get(`/blocked-bidders/check`, { params: { productId, bidderId } });
+    const response = await apiClient.get(`/blocked-bidders/${productId}/${bidderId}`);
     return response.data;
   },
 

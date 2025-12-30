@@ -115,11 +115,17 @@ export const ProductController = {
     try {
       const id = req.params.id as string;
       const { description } = req.body;
+      console.log("Append description request:", {
+        id,
+        body: req.body,
+        user: (req as any).user,
+      });
       if (!description || typeof description !== "string")
         return res.status(400).json({ error: "description is required" });
       await ProductService.appendDescription(id, description);
       return res.status(204).send();
     } catch (err: any) {
+      console.error("Append description error:", err);
       return res.status(400).json({ error: err.message });
     }
   },
@@ -145,6 +151,24 @@ export const ProductController = {
       const { newPrice } = req.body;
       if (newPrice === undefined)
         return res.status(400).json({ error: "newPrice is required" });
+
+      // Check authorization: must be admin or the seller of this product
+      const product = await ProductService.getById(id);
+      if (!product) return res.status(404).json({ error: "Product not found" });
+
+      const sellerId =
+        product.seller_id || (product.seller && product.seller.id);
+      const isAdmin = req.user?.role === "admin";
+      const isSeller = req.user?.id === sellerId;
+
+      if (!isAdmin && !isSeller) {
+        return res
+          .status(403)
+          .json({
+            error: "You do not have permission to update this product price",
+          });
+      }
+
       const updated = await ProductService.updatePriceAndBidCount(
         id,
         Number(newPrice)

@@ -44,6 +44,10 @@ productRouter.patch(
   requireRole("admin"),
   ProductController.updatePrice
 );
+productRouter.post("/", requireAuth, requireRole('seller'), upload.single('image'), ProductController.create);
+productRouter.post("/:id/description", requireAuth, requireRole('seller'), requireFields('description'), ProductController.appendDescription);
+productRouter.patch("/:id/status", requireAuth, requireRole(['seller','admin']), ProductController.updateStatus);
+productRouter.patch("/:id/price", requireAuth, ProductController.updatePrice);
 productRouter.patch("/:id/view", ProductController.incrementView);
 productRouter.delete(
   "/:id",

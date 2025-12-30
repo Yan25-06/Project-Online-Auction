@@ -70,10 +70,22 @@ export const productModel = {
     id: string,
     additionalDescription: string
   ): Promise<void> {
+    // Get the current max order to determine next order
+    const { data: existing, error: fetchError } = await supabase
+      .from("product_descriptions")
+      .select("description_order")
+      .eq("product_id", id)
+      .order("description_order", { ascending: false })
+      .limit(1);
+
+    if (fetchError) throw fetchError;
+
+    const nextOrder = (existing?.[0]?.description_order ?? 0) + 1;
+
     const { error } = await supabase.from("product_descriptions").insert({
       product_id: id,
       description_text: additionalDescription,
-      description_order: Date.now(),
+      description_order: nextOrder,
     });
 
     if (error) throw error;
