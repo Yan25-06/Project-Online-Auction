@@ -15,7 +15,7 @@ productRouter.get("/seller/:sellerId", ProductController.findBySeller);
 productRouter.post("/", requireAuth, requireRole('seller'), upload.single('image'), ProductController.create);
 productRouter.post("/:id/description", requireAuth, requireRole('seller'), requireFields('description'), ProductController.appendDescription);
 productRouter.patch("/:id/status", requireAuth, requireRole(['seller','admin']), ProductController.updateStatus);
-productRouter.patch("/:id/price", requireAuth, requireRole('admin'), ProductController.updatePrice);
+productRouter.patch("/:id/price", requireAuth, ProductController.updatePrice);
 productRouter.patch("/:id/view", ProductController.incrementView);
 productRouter.delete("/:id", requireAuth, requireRole(['seller','admin']), ProductController.delete);
 productRouter.get("/:id", ProductController.getById);
