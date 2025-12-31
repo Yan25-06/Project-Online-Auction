@@ -55,6 +55,17 @@ productRouter.delete(
   requireRole(["seller", "admin"]),
   ProductController.delete
 );
+
+// Product images routes
+productRouter.post(
+  "/:id/images",
+  requireAuth,
+  requireRole("seller"),
+  upload.array("images", 5), // Max 5 images
+  ProductController.uploadImages
+);
+productRouter.get("/:id/images", ProductController.getImages);
+
 productRouter.get("/:id", ProductController.getById);
 
 export { productRouter };

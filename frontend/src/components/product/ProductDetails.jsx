@@ -44,6 +44,7 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState("");
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [additionalImages, setAdditionalImages] = useState([]);
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState("Chưa có");
 
@@ -77,6 +78,17 @@ const ProductDetails = () => {
         }
 
         ProductService.incrementView(id).catch(console.error);
+
+        // Load additional images from product_images table
+        try {
+          const imagesData = await ProductService.getImages(id);
+          if (imagesData && Array.isArray(imagesData)) {
+            setAdditionalImages(imagesData);
+          }
+        } catch (imgError) {
+          console.error("Lỗi tải ảnh phụ:", imgError);
+          setAdditionalImages([]);
+        }
 
         // Load appended descriptions from product_descriptions table
         if (
@@ -165,13 +177,23 @@ const ProductDetails = () => {
     const mainImg = product.main_image_url || "https://via.placeholder.com/400";
     const images = [mainImg];
 
-    if (product.images && Array.isArray(product.images)) {
-      product.images.forEach((img) => {
+    // Add additional images from product_images table
+    if (additionalImages && Array.isArray(additionalImages)) {
+      additionalImages.forEach((img) => {
         if (img.image_url) images.push(img.image_url);
       });
     }
+
+    // Fallback: also check product.images if it exists (legacy support)
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((img) => {
+        if (img.image_url && !images.includes(img.image_url)) {
+          images.push(img.image_url);
+        }
+      });
+    }
     return images;
-  }, [product]);
+  }, [product, additionalImages]);
 
   useEffect(() => {
     if (allImages.length > 0) setActiveImage(allImages[0]);

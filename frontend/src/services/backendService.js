@@ -93,6 +93,18 @@ export const ProductService = {
   delete: async (id) => {
     const response = await apiClient.delete(`/products/${id}`);
     return response.data;
+  },
+
+  uploadImages: async (id, formData) => {
+    const response = await apiClient.post(`/products/${id}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  getImages: async (id) => {
+    const response = await apiClient.get(`/products/${id}/images`);
+    return response.data;
   }
 };
 

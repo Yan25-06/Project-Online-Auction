@@ -30,8 +30,10 @@ const PostProductPage = () => {
 
   // State riêng cho Description (Quill) và Images
   const [description, setDescription] = useState('');
-  const [files, setFiles] = useState([]); // File object để gửi lên server
-  const [previewImages, setPreviewImages] = useState([]); // URL blob để hiển thị preview
+  const [mainImage, setMainImage] = useState(null); // Ảnh chính
+  const [mainImagePreview, setMainImagePreview] = useState('');
+  const [additionalImages, setAdditionalImages] = useState([]); // Ảnh phụ (tối đa 5)
+  const [additionalPreviews, setAdditionalPreviews] = useState([]);
 
   // 1. Fetch Danh mục từ API khi vào trang
   useEffect(() => {
@@ -77,27 +79,36 @@ const PostProductPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Xử lý chọn ảnh (Preview + Lưu file)
-  const handleImageChange = (e) => {
+  // Xử lý chọn ảnh chính
+  const handleMainImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMainImage(file);
+      setMainImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Xử lý chọn ảnh phụ (tối đa 5 ảnh)
+  const handleAdditionalImagesChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     
-    // Giới hạn tối đa 10 ảnh
-    if (files.length + selectedFiles.length > 10) {
-      toast.show("Bạn chỉ được đăng tối đa 10 ảnh.", { type: 'error' });
+    // Giới hạn tối đa 5 ảnh phụ
+    if (additionalImages.length + selectedFiles.length > 5) {
+      toast.show("Bạn chỉ được đăng tối đa 5 ảnh phụ.", { type: 'error' });
       return;
     }
 
     // Tạo URL preview
     const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
 
-    setFiles(prev => [...prev, ...selectedFiles]);
-    setPreviewImages(prev => [...prev, ...newPreviews]);
+    setAdditionalImages(prev => [...prev, ...selectedFiles]);
+    setAdditionalPreviews(prev => [...prev, ...newPreviews]);
   };
 
-  // Xóa ảnh đã chọn
-  const removeImage = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  // Xóa ảnh phụ
+  const removeAdditionalImage = (index) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== index));
+    setAdditionalPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   // Xử lý Submit Form
@@ -105,9 +116,15 @@ const PostProductPage = () => {
     e.preventDefault();
     setError('');
 
-    // 1. Validation: Ít nhất 3 ảnh
-    if (files.length < 1) {
-      setError('Vui lòng tải lên ít nhất 3 hình ảnh sản phẩm.');
+    // 1. Validation: Ít nhất 1 ảnh chính và 3 ảnh phụ
+    if (!mainImage) {
+      setError('Vui lòng tải lên ảnh chính cho sản phẩm.');
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    if (additionalImages.length < 3) {
+      setError('Vui lòng tải lên ít nhất 3 ảnh phụ cho sản phẩm.');
       window.scrollTo(0, 0);
       return;
     }
@@ -140,12 +157,20 @@ const PostProductPage = () => {
       
       data.append('ends_at', formData.endsAt);
       data.append('description', description); 
+      data.append('image', mainImage); // Ảnh chính
 
-      files.forEach((file) => {
-        data.append('image', file);
-      });
+      // Tạo sản phẩm trước
+      const createdProduct = await ProductService.create(data);
+      const productId = createdProduct.id;
 
-      await ProductService.create(data);
+      // Upload ảnh phụ riêng
+      if (additionalImages.length > 0) {
+        const imageFormData = new FormData();
+        additionalImages.forEach((file) => {
+          imageFormData.append('images', file);
+        });
+        await ProductService.uploadImages(productId, imageFormData);
+      }
 
       toast.show('Đăng sản phẩm thành công!', { type: 'success' });
       navigate('/seller/products');
@@ -167,14 +192,14 @@ const PostProductPage = () => {
       current_price: formData.startingPrice || 0, // Mới đăng thì giá hiện tại = giá khởi điểm
       bid_increment: formData.stepPrice || 0,
       buy_now_price: formData.buyNowPrice || null,
-      main_image_url: previewImages.length > 0 ? previewImages[0] : 'https://placehold.co/800?text=No%20Image&font=roboto',
+      main_image_url: mainImagePreview || 'https://placehold.co/800?text=No%20Image&font=roboto',
       category_id: formData.categoryId,
       bid_count: 0,
       view_count: 0,
       ends_at: formData.endsAt || new Date(Date.now() + 86400000).toISOString(),
       created_at: new Date().toISOString()
     };
-  }, [formData, previewImages]);
+  }, [formData, mainImagePreview]);
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fadeIn min-h-screen bg-gray-50">
@@ -210,32 +235,62 @@ const PostProductPage = () => {
               
               {/* Upload Images */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh sản phẩm (Ít nhất 3 ảnh) <span className="text-red-500">*</span></label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors bg-blue-50/20">
-                  <input type="file" multiple onChange={handleImageChange} className="hidden" id="image-upload" accept="image/*" />
-                  <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center">
-                      <div className="bg-blue-100 p-3 rounded-full mb-3">
-                         <Upload size={24} className="text-blue-600" />
-                      </div>
-                      <span className="text-blue-600 font-bold hover:underline">Tải ảnh lên</span>
-                      <span className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (Tối đa 5MB)</span>
-                  </label>
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh sản phẩm <span className="text-red-500">*</span></label>
                 
-                {/* Image Previews */}
-                {previewImages.length > 0 && (
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 mt-4">
-                    {previewImages.map((img, idx) => (
-                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
-                        <img src={img} alt="preview" className="w-full h-full object-cover" />
-                        <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-                          <X size={14} />
-                        </button>
-                        {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-[10px] text-center py-0.5">Ảnh bìa</span>}
-                      </div>
-                    ))}
+                {/* Ảnh chính */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-600 mb-2">Ảnh chính (bìa sản phẩm)</label>
+                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center hover:bg-blue-50 transition-colors">
+                    <input type="file" onChange={handleMainImageChange} className="hidden" id="main-image-upload" accept="image/*" />
+                    <label htmlFor="main-image-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                        <div className="bg-blue-100 p-3 rounded-full mb-2">
+                           <Upload size={20} className="text-blue-600" />
+                        </div>
+                        <span className="text-blue-600 font-medium hover:underline text-sm">Tải ảnh chính</span>
+                        <span className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (Tối đa 5MB)</span>
+                    </label>
                   </div>
-                )}
+                  {mainImagePreview && (
+                    <div className="mt-3 relative w-40 aspect-square rounded-lg overflow-hidden border-2 border-blue-500">
+                      <img src={mainImagePreview} alt="preview" className="w-full h-full object-cover" />
+                      <span className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-xs text-center py-1 font-medium">Ảnh chính</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ảnh phụ */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">Ảnh phụ (3-5 ảnh) <span className="text-red-500">*</span></label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                    <input type="file" multiple onChange={handleAdditionalImagesChange} className="hidden" id="additional-images-upload" accept="image/*" />
+                    <label htmlFor="additional-images-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                        <div className="bg-gray-100 p-3 rounded-full mb-2">
+                           <Upload size={20} className="text-gray-600" />
+                        </div>
+                        <span className="text-gray-600 font-medium hover:underline text-sm">Tải ảnh phụ</span>
+                        <span className="text-xs text-gray-500 mt-1">Chọn nhiều ảnh cùng lúc (3-5 ảnh)</span>
+                    </label>
+                  </div>
+                  
+                  {/* Image Previews */}
+                  {additionalPreviews.length > 0 && (
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 mt-4">
+                      {additionalPreviews.map((img, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
+                          <img src={img} alt="preview" className="w-full h-full object-cover" />
+                          <button 
+                            type="button" 
+                            onClick={() => removeAdditionalImage(idx)} 
+                            className="absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                          >
+                            <X size={14} />
+                          </button>
+                          <span className="absolute bottom-0 left-0 right-0 bg-gray-600 text-white text-[10px] text-center py-0.5">Phụ {idx + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Product Info */}
