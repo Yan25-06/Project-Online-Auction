@@ -72,7 +72,7 @@ export const userModel = {
     return (user.rating_score || 0) >= 0.80;
   },
 
-  // Request upgrade to seller
+  // Request upgrade to seller (DB operation only - business logic in service)
   async requestUpgrade(id: string): Promise<User> {
     const { data, error } = await supabase
       .from('users')
@@ -119,12 +119,13 @@ export const userModel = {
     return data;
   },
 
-  // Reject upgrade request
+  // Reject upgrade request (save rejection timestamp for 7-day cooldown)
   async rejectUpgrade(id: string): Promise<User> {
     const { data, error } = await supabase
       .from('users')
       .update({ 
         upgrade_requested: false,
+        upgrade_rejected_at: new Date(),
         updated_at: new Date() 
       })
       .eq('id', id)

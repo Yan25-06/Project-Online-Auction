@@ -346,8 +346,9 @@ export const UserService = {
     return response.data;
   },
 
-  requestUpgrade: async () => {
-    const response = await apiClient.post('/users/request-upgrade');
+  // userId được truyền từ frontend (lấy từ AuthContext)
+  requestUpgrade: async (userId) => {
+    const response = await apiClient.post(`/users/${userId}/request-upgrade`);
     return response.data;
   },
 

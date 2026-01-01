@@ -56,6 +56,7 @@ export interface User {
   total_ratings: number;
   upgrade_requested: boolean;
   upgrade_requested_at?: Date;
+  upgrade_rejected_at?: Date;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

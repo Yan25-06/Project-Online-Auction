@@ -21,7 +21,34 @@ export const UserService = {
     return await userModel.findAll(page, limit);
   },
 
+  // Business logic: Request upgrade to seller (with 7-day cooldown check)
   requestUpgrade: async (id: string) => {
+    // Check if user exists
+    const user = await userModel.findById(id);
+    if (!user) throw new Error('Người dùng không tồn tại');
+    
+    // Only bidders can request upgrade
+    if (user.role !== 'bidder') {
+      throw new Error('Chỉ người mua mới có thể yêu cầu nâng cấp');
+    }
+    
+    // Check if already has pending request
+    if (user.upgrade_requested) {
+      throw new Error('Bạn đã có yêu cầu đang chờ duyệt');
+    }
+    
+    // Check 7-day cooldown after rejection
+    if (user.upgrade_rejected_at) {
+      const rejectedDate = new Date(user.upgrade_rejected_at);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      if (rejectedDate > sevenDaysAgo) {
+        const daysLeft = Math.ceil((rejectedDate.getTime() - sevenDaysAgo.getTime()) / (1000 * 60 * 60 * 24));
+        throw new Error(`Yêu cầu của bạn đã bị từ chối. Vui lòng đợi ${daysLeft} ngày nữa để gửi lại.`);
+      }
+    }
+    
     return await userModel.requestUpgrade(id);
   },
 

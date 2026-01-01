@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Home, ChevronRight } from "lucide-react";
+import { Home, ChevronRight, CheckCircle, XCircle, User, Mail, Calendar, Star } from "lucide-react";
 import { AdminService } from "../../services/adminService";
 
 export default function AdminUpgradeRequests() {
@@ -18,46 +18,60 @@ export default function AdminUpgradeRequests() {
       setRequests(data || []);
     } catch (error) {
       console.error("Error loading upgrade requests:", error);
-      alert("Failed to load upgrade requests");
+      alert("Không thể tải danh sách yêu cầu");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (userId) => {
-    if (!confirm("Approve this seller upgrade request?")) return;
+  const handleApprove = async (userId, userName) => {
+    if (!confirm(`Bạn có chắc muốn duyệt yêu cầu của "${userName}"?`)) return;
 
     try {
       await AdminService.users.approveUpgrade(userId);
-      alert("Upgrade request approved");
+      alert("Đã duyệt yêu cầu nâng cấp thành công!");
       loadRequests();
     } catch (error) {
       console.error("Error approving upgrade:", error);
-      alert("Failed to approve upgrade request");
+      alert("Duyệt yêu cầu thất bại");
     }
   };
 
-  const handleReject = async (userId) => {
-    if (!confirm("Reject this seller upgrade request?")) return;
+  const handleReject = async (userId, userName) => {
+    if (!confirm(`Bạn có chắc muốn từ chối yêu cầu của "${userName}"? Người dùng sẽ phải chờ 7 ngày để gửi lại.`)) return;
 
     try {
       await AdminService.users.rejectUpgrade(userId);
-      alert("Upgrade request rejected");
+      alert("Đã từ chối yêu cầu nâng cấp");
       loadRequests();
     } catch (error) {
       console.error("Error rejecting upgrade:", error);
-      alert("Failed to reject upgrade request");
+      alert("Từ chối yêu cầu thất bại");
     }
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric",
-      month: "short",
-      day: "numeric",
+      month: "2-digit",
+      day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Rating score is stored as decimal (0.80 = 80%)
+  const formatRating = (user) => {
+    if (!user.total_ratings || user.total_ratings === 0) {
+      return <span className="text-gray-400 italic">Chưa có đánh giá</span>;
+    }
+    const score = (user.rating_score || 0) * 100;
+    const colorClass = score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
+    return (
+      <span className={`font-medium ${colorClass}`}>
+        {user.positive_ratings}+/{user.total_ratings - user.positive_ratings}- ({score.toFixed(0)}%)
+      </span>
+    );
   };
 
   return (
@@ -71,21 +85,36 @@ export default function AdminUpgradeRequests() {
             </Link>
             <ChevronRight size={16} className="mx-2" />
             <Link to="/admin" className="hover:text-blue-600">
-              Admin Dashboard
+              Trang quản trị
             </Link>
             <ChevronRight size={16} className="mx-2" />
-            <span className="text-gray-900 font-medium">Yêu cầu nâng cấp seller</span>
+            <span className="text-gray-900 font-medium">Yêu cầu nâng cấp Seller</span>
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            Seller Upgrade Requests
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Yêu cầu nâng cấp Seller
+              </h1>
+              <p className="text-gray-500 mt-1">Quản lý các yêu cầu nâng cấp từ Bidder lên Seller</p>
+            </div>
+            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-medium">
+              {requests.length} yêu cầu đang chờ
+            </div>
+          </div>
 
           {loading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">
+              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-500">Đang tải...</p>
+            </div>
           ) : requests.length === 0 ? (
-            <div className="bg-white shadow sm:rounded-lg p-6 text-center text-gray-500">
-              No pending upgrade requests
+            <div className="bg-white shadow sm:rounded-lg p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Không có yêu cầu nào</h3>
+              <p className="text-gray-500">Hiện tại không có yêu cầu nâng cấp nào đang chờ duyệt.</p>
             </div>
           ) : (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -93,28 +122,41 @@ export default function AdminUpgradeRequests() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
+                      <div className="flex items-center gap-1">
+                        <User size={14} /> Người dùng
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                      <div className="flex items-center gap-1">
+                        <Mail size={14} /> Email
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Requested At
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} /> Ngày gửi
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rating
+                      <div className="flex items-center gap-1">
+                        <Star size={14} /> Điểm đánh giá
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hành động
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {requests.map((user) => (
-                    <tr key={user.id}>
+                    <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.full_name}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                            {(user.full_name || 'U').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.full_name || 'Không tên'}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -129,28 +171,24 @@ export default function AdminUpgradeRequests() {
                             : "N/A"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.total_ratings > 0
-                          ? `${user.positive_ratings}/${
-                              user.total_ratings
-                            } (${Math.round(
-                              (user.positive_ratings / user.total_ratings) * 100
-                            )}%)`
-                          : "No ratings"}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {formatRating(user)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleApprove(user.id)}
-                          className="text-green-600 hover:text-green-900 mr-4"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(user.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Reject
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleApprove(user.id, user.full_name)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium text-sm"
+                          >
+                            <CheckCircle size={16} /> Duyệt
+                          </button>
+                          <button
+                            onClick={() => handleReject(user.id, user.full_name)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium text-sm"
+                          >
+                            <XCircle size={16} /> Từ chối
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
