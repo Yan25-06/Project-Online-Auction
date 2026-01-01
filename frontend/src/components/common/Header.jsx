@@ -18,10 +18,8 @@ const Header = () => {
       if (user) {
         try {
           const backendUser = await UserService.getById(user.id);
-          console.log(backendUser);
           setProfile(backendUser || null);
         } catch (e) {
-          console.log('Failed to fetch backend user profile', e);
           setProfile(null);
         }
       }

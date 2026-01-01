@@ -4,8 +4,14 @@ import { RatingService } from '../services/rating.service.js';
 export const RatingController = {
   upsert: async (req: Request, res: Response) => {
     try {
-      const { orderId, ratingUserId, ratedUserId, score, feedback } = req.body;
-      const data = await RatingService.upsert(orderId, ratingUserId, ratedUserId, score, feedback);
+      const { orderId, raterId, ratedUserId, ratingType, comment } = req.body;
+      
+      // Validate ratingType
+      if (!['positive', 'negative'].includes(ratingType)) {
+        return res.status(400).json({ error: 'ratingType must be positive or negative' });
+      }
+      
+      const data = await RatingService.upsert(orderId, raterId, ratedUserId, ratingType, comment);
       return res.status(201).json(data);
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
@@ -27,8 +33,8 @@ export const RatingController = {
   findByOrderAndRater: async (req: Request, res: Response) => {
     try {
       const orderId = req.params.orderId as string;
-      const ratingUserId = req.params.ratingUserId as string;
-      const data = await RatingService.findByOrderAndRater(orderId, ratingUserId);
+      const raterId = req.params.raterId as string;
+      const data = await RatingService.findByOrderAndRater(orderId, raterId);
       if (!data) return res.status(404).json({ error: 'Rating not found' });
       return res.status(200).json(data);
     } catch (err: any) {

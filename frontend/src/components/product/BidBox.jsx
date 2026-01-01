@@ -14,6 +14,7 @@ const BidBox = ({ product, onTopBidderChange }) => {
   const [isOwner, setIsOwner] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [rejectingBidId, setRejectingBidId] = useState(null);
+  const [ratingError, setRatingError] = useState(null); // Lưu thông báo lỗi về rating
   const toast = useToast();
 
   useEffect(() => {
@@ -38,15 +39,33 @@ const BidBox = ({ product, onTopBidderChange }) => {
           const response = await BlockedBidderService.isBlocked(product.id, currentUser.id);
           // API returns { blocked: true/false } or throws error if not blocked
           const blocked = response?.blocked === true;
-          console.log('ProductId:', product.id, 'UserId:', currentUser.id, 'Response:', response, 'isBlocked:', blocked);
           setIsBlocked(blocked);
         } catch (e) {
           // If API throws error, user is not blocked
-          console.log('Check block error (not blocked):', e.message);
           setIsBlocked(false);
+        }
+
+        // Check rating eligibility
+        try {
+          const userDetails = await UserService.getById(currentUser.id);
+          const totalRatings = userDetails?.total_ratings || 0;
+          const positiveRatings = userDetails?.positive_ratings || 0;
+          const ratingScore = userDetails?.rating_score || 0;
+          const allowUnrated = product.allow_unrated_bidders !== false; // default true
+
+          if (totalRatings === 0 && !allowUnrated) {
+            setRatingError('Người bán không cho phép bidder chưa có đánh giá tham gia đấu giá');
+          } else if (totalRatings > 0 && ratingScore < 0.80) {
+            setRatingError(`Điểm đánh giá của bạn là ${positiveRatings}/${totalRatings} (${(ratingScore * 100).toFixed(1)}%). Cần tối thiểu 80% để tham gia đấu giá`);
+          } else {
+            setRatingError(null);
+          }
+        } catch (e) {
+          setRatingError(null);
         }
       } else {
         setIsBlocked(false);
+        setRatingError(null);
       }
 
       try {
@@ -73,6 +92,11 @@ const BidBox = ({ product, onTopBidderChange }) => {
       const user = await AuthService.getCurrentUser();
       if (!user) throw new Error('Bạn cần đăng nhập để đặt giá');
 
+      // Check if bidder is blocked
+      if (isBlocked) {
+        throw new Error('Bạn đã bị chặn khỏi sản phẩm này. Không thể đặt giá.');
+      }
+
       const inc = product.bid_increment || 0;
       const minReq = (highestBid && highestBid.bid_amount) ? (highestBid.bid_amount + inc) : ((product.current_price || 0) + inc);
       const numeric = Number(bidAmount);
@@ -85,6 +109,7 @@ const BidBox = ({ product, onTopBidderChange }) => {
         bid_amount: numeric
       };
 
+      // Backend will validate rating requirement (80% threshold)
       const res = await BidService.create(payload);
 
       const fresh = await ProductService.getById(product.id);
@@ -172,6 +197,10 @@ const BidBox = ({ product, onTopBidderChange }) => {
       ) : isBlocked ? (
         <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
           Bạn đã bị chặn khỏi sản phẩm này. Không thể đặt giá.
+        </div>
+      ) : ratingError ? (
+        <div className="mb-4 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-800">
+          {ratingError}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 mb-4">

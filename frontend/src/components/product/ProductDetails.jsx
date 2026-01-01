@@ -47,6 +47,7 @@ const ProductDetails = () => {
   const [additionalImages, setAdditionalImages] = useState([]);
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState("Chưa có");
+  const [topBidderRating, setTopBidderRating] = useState(null); // Rating info của bidder cao nhất
 
   // States for appended description
   const [appendedDescriptions, setAppendedDescriptions] = useState([]);
@@ -126,6 +127,7 @@ const ProductDetails = () => {
 
       if (!product.bid_count || product.bid_count === 0) {
         setTopBidderName("Chưa có");
+        setTopBidderRating(null);
         return;
       }
 
@@ -137,10 +139,17 @@ const ProductDetails = () => {
           const name = user.full_name || "Người dùng";
           // Mask tên để bảo mật
           setTopBidderName(maskName(name));
+          // Lưu rating info
+          setTopBidderRating({
+            rating_score: user.rating_score || 0,
+            positive_ratings: user.positive_ratings || 0,
+            total_ratings: user.total_ratings || 0
+          });
         }
       } catch (error) {
         console.error("Lỗi lấy bidder:", error);
         setTopBidderName("Ẩn danh");
+        setTopBidderRating(null);
       }
     };
 
@@ -174,7 +183,7 @@ const ProductDetails = () => {
   // --- IMAGE HANDLING ---
   const allImages = useMemo(() => {
     if (!product) return [];
-    const mainImg = product.main_image_url || "https://via.placeholder.com/400";
+    const mainImg = product.main_image_url || "https://placehold.co/800?text=No%20Image&font=roboto";
     const images = [mainImg];
 
     // Add additional images from product_images table
@@ -357,11 +366,12 @@ const ProductDetails = () => {
                   <p className="font-bold text-sm text-gray-800">
                     {product.seller?.full_name || "Ẩn danh"}
                   </p>
-                  <div className="flex items-center gap-1 text-xs text-yellow-500">
-                    <Star size={10} fill="currentColor" />{" "}
-                    {product.seller?.rating_score || 0}{" "}
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className={`font-medium ${(product.seller?.rating_score || 0) >= 0.80 ? 'text-green-600' : (product.seller?.rating_score || 0) >= 0.50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {product.seller?.positive_ratings || 0}+/{(product.seller?.total_ratings || 0) - (product.seller?.positive_ratings || 0)}-
+                    </span>
                     <span className="text-gray-400">
-                      ({product.seller?.total_ratings || 0} đánh giá)
+                      ({((product.seller?.rating_score || 0) * 100).toFixed(0)}%)
                     </span>
                   </div>
                 </div>
@@ -378,8 +388,19 @@ const ProductDetails = () => {
                     {topBidderName}
                   </p>
 
-                  <div className="flex items-center gap-1 text-xs text-yellow-500">
-                    {product.bid_count || 0} lượt đấu giá
+                  <div className="flex items-center gap-1 text-xs">
+                    {topBidderRating ? (
+                      <>
+                        <span className={`font-medium ${topBidderRating.rating_score >= 0.80 ? 'text-green-600' : topBidderRating.rating_score >= 0.50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {topBidderRating.positive_ratings}+/{topBidderRating.total_ratings - topBidderRating.positive_ratings}-
+                        </span>
+                        <span className="text-gray-400">
+                          ({(topBidderRating.rating_score * 100).toFixed(0)}%) • {product.bid_count || 0} lượt
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">0+/0- (0%) • {product.bid_count || 0} lượt</span>
+                    )}
                   </div>
                 </div>
               </div>

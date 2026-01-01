@@ -61,14 +61,15 @@ export const userModel = {
     return (user.positive_ratings / user.total_ratings) * 100;
   },
 
-  // Check if user can bid (rating > 80% or no ratings with seller permission)
+  // Check if user can bid (rating >= 80% or no ratings with seller permission)
+  // rating_score is stored as decimal (0.80 = 80%)
   async canBid(userId: string, allowUnrated: boolean = true): Promise<boolean> {
-    const percentage = await this.getRatingPercentage(userId);
     const user = await this.findById(userId);
     
     if (!user) return false;
     if (user.total_ratings === 0) return allowUnrated;
-    return percentage >= 80;
+    // rating_score is stored as decimal, so 80% = 0.80
+    return (user.rating_score || 0) >= 0.80;
   },
 
   // Request upgrade to seller

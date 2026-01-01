@@ -23,9 +23,22 @@ export const BidService = {
       throw new Error('Sellers cannot bid on their own product');
     }
 
-    // Check bidder rating / permission to bid
-    const canBid = await userModel.canBid(bidder_id);
-    if (!canBid) throw new Error('Your rating is too low to place bids');
+    // Check bidder rating: 80% threshold or unrated (if seller allows)
+    const allowUnrated = product.allow_unrated_bidders !== false; // default true
+    const canBid = await userModel.canBid(bidder_id, allowUnrated);
+    
+    if (!canBid) {
+      const bidder = await userModel.findById(bidder_id);
+      const totalRatings = bidder?.total_ratings || 0;
+      const positiveRatings = bidder?.positive_ratings || 0;
+      const ratingScore = bidder?.rating_score || 0;
+      
+      if (totalRatings === 0) {
+        throw new Error('Người bán không cho phép bidder chưa có đánh giá tham gia đấu giá');
+      } else {
+        throw new Error(`Điểm đánh giá của bạn là ${positiveRatings}/${totalRatings} (${(ratingScore * 100).toFixed(1)}%). Cần tối thiểu 80% để tham gia đấu giá`);
+      }
+    }
 
     // Check bid step/increment and amount greater than current price
     const highest = await bidModel.getHighestBid(product_id);
