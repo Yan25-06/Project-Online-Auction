@@ -138,7 +138,7 @@ const UserPage = () => {
             {profile?.role === 'admin' && (
               <>
                 <div className="border-t my-2"></div>
-                <Link to="/admin" className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 text-purple-700 font-medium border border-purple-200">
+                <Link to="/admin" className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors bg-linear-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 text-purple-700 font-medium border border-purple-200">
                   <Shield size={18} />
                   <span>Trang quản trị</span>
                 </Link>
@@ -389,7 +389,7 @@ const UpgradeToSeller = ({ profile, onRefresh }) => {
       
       <div className="max-w-2xl">
         {/* Benefits */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-100 mb-6">
+        <div className="bg-linear-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-100 mb-6">
           <h4 className="font-bold text-lg text-blue-800 mb-4 flex items-center gap-2">
             <Store size={20} /> Lợi ích khi trở thành Người bán
           </h4>
