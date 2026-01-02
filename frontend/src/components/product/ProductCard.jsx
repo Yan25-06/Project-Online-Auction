@@ -9,7 +9,7 @@ const ProductCard = ({ product }) => {
   // Database trả về created_at, không phải createdAt
   const isNew = isProductNew(product.created_at); 
   const { watchList, toggleWatchList } = useWatchList();
-  const isFavorite = watchList.includes(product);
+  const isFavorite = watchList.some(item => item.id === product.id)
   const [categoryName, setCategoryName] = useState('Đang tải...');
   const [topBidderName, setTopBidderName] = useState('Chưa có');
 

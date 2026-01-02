@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, ChevronRight } from 'lucide-react';
+import { Home, ChevronRight, Shield } from 'lucide-react';
 import { UserService, WatchlistService, RatingService, BidService } from '../services/backendService';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/product/ProductCard';
@@ -20,7 +20,23 @@ const UserPage = () => {
   const { user } = useAuth();
   const { watchList } = useWatchList();
   const [title, setTitle] = useState('Trang cá nhân');
+  const [profile, setProfile] = useState(null);
   
+
+  useEffect(() => {
+    // Fetch user profile to get role from backend
+    const fetchProfile = async () => {
+      if (user && user.id) {
+        try {
+          const userProfile = await UserService.getById(user.id);
+          setProfile(userProfile);
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+        }
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
     // Hooks
@@ -76,6 +92,17 @@ const UserPage = () => {
             <TabButton id="favorites" label="Sản phẩm yêu thích" icon={<IconHeart />} activeTab={activeTab} setActiveTab={setActiveTab} />
             <TabButton id="bidding" label="Đang đấu giá" icon={<IconGavel />} activeTab={activeTab} setActiveTab={setActiveTab} />
             <TabButton id="won" label="Sản phẩm đã thắng" icon={<IconTrophy />} activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            {/* Admin Panel - Only show for admin users */}
+            {profile?.role === 'admin' && (
+              <>
+                <div className="border-t my-2"></div>
+                <Link to="/admin" className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 text-purple-700 font-medium border border-purple-200">
+                  <Shield size={18} />
+                  <span>Trang quản trị</span>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -156,10 +183,10 @@ const ProfileSettings = () => {
   }
 
   return (
-    <div className="space-y-8 flex flex-col items-center">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-24">
       <form>
         <h3 className="text-2xl font-bold mb-4 border-b pb-2">Thông tin cá nhân</h3>
-        <div className="grid grid-cols-1 gap-4 max-w-md">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
             <input 
@@ -198,7 +225,7 @@ const ProfileSettings = () => {
 
       <div>
         <h3 className="text-2xl font-bold mb-4 border-b pb-2">Đổi mật khẩu</h3>
-        <div className="grid grid-cols-1 gap-4 max-w-md">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Mật khẩu cũ</label>
             <input 
