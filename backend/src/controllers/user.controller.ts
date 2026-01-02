@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express';
-import { UserService } from '../services/user.service.js';
+import type { Request, Response } from "express";
+import { UserService } from "../services/user.service.js";
 
 export const UserController = {
   getById: async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
       const user = await UserService.findById(id);
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user) return res.status(404).json({ error: "User not found" });
       return res.status(200).json(user);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -15,10 +15,10 @@ export const UserController = {
 
   getByEmail: async (req: Request, res: Response) => {
     try {
-      const email = String(req.query.email || '');
-      if (!email) return res.status(400).json({ error: 'email is required' });
+      const email = String(req.query.email || "");
+      if (!email) return res.status(400).json({ error: "email is required" });
       const user = await UserService.findByEmail(email);
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user) return res.status(404).json({ error: "User not found" });
       return res.status(200).json(user);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -94,5 +94,15 @@ export const UserController = {
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
-  }
+  },
+
+  delete: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string;
+      await UserService.delete(id);
+      return res.status(204).send();
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  },
 };

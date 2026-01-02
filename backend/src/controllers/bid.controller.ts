@@ -22,11 +22,25 @@ export const BidController = {
     }
   },
 
-  // Get masked bid history for product
+  // Get bid history for product (masked or full based on user role)
   getHistory: async (req: Request, res: Response) => {
     try {
       const productId = req.params.productId as string;
-      const data = await BidService.getHistory(productId);
+      
+      // Check if user is the seller of this product
+      let isSeller = false;
+      if (req.user) {
+        try {
+          const { ProductService } = await import('../services/product.service.js');
+          const product = await ProductService.getById(productId);
+          const sellerId = product.seller_id || (product.seller && product.seller.id);
+          isSeller = req.user.id === sellerId;
+        } catch (e) {
+          isSeller = false;
+        }
+      }
+      
+      const data = await BidService.getHistory(productId, isSeller);
       return res.status(200).json(data);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -37,8 +51,7 @@ export const BidController = {
     try {
       const productId = req.params.productId as string;
       const bid = await BidService.getHighestBid(productId);
-      if (!bid) return res.status(404).json({ error: 'No bids found' });
-      return res.status(200).json(bid);
+      return res.status(200).json(bid || null);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

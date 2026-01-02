@@ -1,4 +1,4 @@
-import { userModel } from '../models/user.model.js';
+import { userModel } from "../models/user.model.js";
 
 export const UserService = {
   findById: async (id: string) => {
@@ -35,5 +35,9 @@ export const UserService = {
 
   rejectUpgrade: async (id: string) => {
     return await userModel.rejectUpgrade(id);
-  }
+  },
+
+  delete: async (id: string) => {
+    return await userModel.delete(id);
+  },
 };
