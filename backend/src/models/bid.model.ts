@@ -161,8 +161,8 @@ export const bidModel = {
     return count || 0;
   },
 
-  // Get bid history for product (masked or full based on isSeller flag)
-  async getBidHistory(productId: string, isSeller: boolean = false): Promise<any[]> {
+  // Get bid history for product (raw data only)
+  async getBidHistory(productId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('bids')
       .select(`
@@ -177,18 +177,6 @@ export const bidModel = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-
-    // Filter out rejected bids for non-sellers
-    const filteredData = isSeller ? (data || []) : (data || []).filter(bid => !bid.is_rejected);
-
-    // Mask bidder names for non-sellers, show full name for sellers
-    return filteredData.map(bid => ({
-      ...bid,
-      bidder_name: Array.isArray(bid.bidder) && bid.bidder[0]?.full_name
-        ? isSeller
-          ? bid.bidder[0].full_name
-          : `****${bid.bidder[0].full_name.slice(-3)}`
-        : '****'
-    }));
+    return data || [];
   }
 };

@@ -5,7 +5,8 @@ export const UserController = {
   getById: async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
-      const user = await UserService.findById(id);
+      const currentUserId = (req as any).user?.id;
+      const user = await UserService.findById(id, currentUserId);
       if (!user) return res.status(404).json({ error: "User not found" });
       return res.status(200).json(user);
     } catch (err: any) {

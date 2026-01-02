@@ -145,9 +145,9 @@ const ProductDetails = () => {
         // Kiểm tra kỹ cấu trúc trả về
         if (hb && hb.bidder_id) {
           const user = await UserService.getById(hb.bidder_id);
+          console.log("Lấy được bidder:", user);
           const name = user.full_name || "Người dùng";
-          // Mask tên để bảo mật
-          setTopBidderName(maskName(name));
+          setTopBidderName(name);
           // Lưu rating info
           setTopBidderRating({
             rating_score: user.rating_score || 0,
@@ -199,7 +199,6 @@ const ProductDetails = () => {
     }
   };
 
-  // --- HÀM TRẢ LỜI CÂU HỎI (CHỈ SELLER) ---
   const handleAnswerQuestion = async (questionId) => {
     if (!answerText.trim()) return;
     

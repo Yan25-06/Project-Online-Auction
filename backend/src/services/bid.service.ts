@@ -80,8 +80,28 @@ export const BidService = {
     return await bidModel.findByProduct(productId);
   },
 
-  getHistory: async (productId: string) => {
-    return await bidModel.getBidHistory(productId);
+  getHistory: async (productId: string, isSeller: boolean = false) => {
+    const data = await bidModel.getBidHistory(productId);
+
+    // Filter out rejected bids for non-sellers
+    const filteredData = isSeller ? data : data.filter(bid => !bid.is_rejected);
+
+    // Mask bidder names for non-sellers, show full name for sellers
+    return filteredData.map(bid => {
+      // Handle both object and array format from Supabase
+      const fullName = Array.isArray(bid.bidder) 
+        ? bid.bidder[0]?.full_name 
+        : bid.bidder?.full_name;
+
+      return {
+        ...bid,
+        bidder_name: fullName
+          ? isSeller
+            ? fullName
+            : `****${fullName.slice(-4)}`
+          : '****'
+      };
+    });
   },
 
   getHighestBid: async (productId: string) => {

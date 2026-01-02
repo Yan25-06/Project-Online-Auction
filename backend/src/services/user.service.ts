@@ -1,8 +1,32 @@
 import { userModel } from "../models/user.model.js";
 
+// Helper function to mask name: "Nguyễn Văn Khoa" -> "****Khoa"
+const maskName = (name: string): string => {
+  if (!name) return "****";
+  
+  const str = name.trim();
+  const parts = str.split(" ");
+  
+  // Lấy phần cuối cùng của tên (tên gọi)
+  const lastName = parts[parts.length - 1];
+  
+  return `****${lastName}`;
+};
+
 export const UserService = {
-  findById: async (id: string) => {
-    return await userModel.findById(id);
+  findById: async (id: string, currentUserId?: string) => {
+    const user = await userModel.findById(id);
+    if (!user) return null;
+    
+    const shouldMask = currentUserId !== id;
+    if (shouldMask) {
+      return {
+        ...user,
+        full_name: maskName(user.full_name)
+      };
+    }
+    
+    return user;
   },
 
   findByEmail: async (email: string) => {
