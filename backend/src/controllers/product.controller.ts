@@ -249,4 +249,39 @@ export const ProductController = {
       return res.status(500).json({ error: err.message });
     }
   },
+
+  // Admin: Get auto-extend settings
+  getAutoExtendSettings: async (req: Request, res: Response) => {
+    try {
+      const settings = await ProductService.getAutoExtendSettings();
+      return res.status(200).json(settings);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // Admin: Update auto-extend settings for all active products
+  updateAutoExtendSettings: async (req: Request, res: Response) => {
+    try {
+      const { threshold_minutes, auto_extend_minutes } = req.body;
+      
+      if (typeof threshold_minutes !== 'number' || threshold_minutes < 1 || threshold_minutes > 60) {
+        return res.status(400).json({ error: "threshold_minutes phải từ 1 đến 60" });
+      }
+      if (typeof auto_extend_minutes !== 'number' || auto_extend_minutes < 1 || auto_extend_minutes > 60) {
+        return res.status(400).json({ error: "auto_extend_minutes phải từ 1 đến 60" });
+      }
+
+      const count = await ProductService.updateAutoExtendSettings(threshold_minutes, auto_extend_minutes);
+      return res.status(200).json({ 
+        success: true, 
+        message: `Đã cập nhật ${count} sản phẩm`,
+        updated: count,
+        threshold_minutes,
+        auto_extend_minutes
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
 };

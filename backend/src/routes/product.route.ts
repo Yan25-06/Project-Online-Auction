@@ -13,6 +13,19 @@ productRouter.get(
   requireRole("admin"),
   ProductController.getAllForAdmin
 );
+// Admin: auto-extend settings
+productRouter.get(
+  "/admin/auto-extend",
+  requireAuth,
+  requireRole("admin"),
+  ProductController.getAutoExtendSettings
+);
+productRouter.put(
+  "/admin/auto-extend",
+  requireAuth,
+  requireRole("admin"),
+  ProductController.updateAutoExtendSettings
+);
 productRouter.get("/search", ProductController.search);
 productRouter.get("/ending-soon", ProductController.endingSoon);
 productRouter.get("/most-bids", ProductController.mostBids);

@@ -56,15 +56,15 @@ export const BidService = {
     // Update product price and bid count
     await productModel.updatePriceAndBidCount(product_id, bid_amount);
 
-    // Auto-extend auction if bid placed within the final 5 minutes -> add 10 minutes
+    // Auto-extend auction if bid placed within threshold time before end
     try {
       const now = new Date();
       const endsAt = new Date(product.ends_at);
-      const thresholdMinutes = 5; // fixed 5 minutes threshold
-      const extensionMinutes = 10; // fixed 10 minutes extension
+      const thresholdMinutes = product.threshold_minutes || 5; // use product's setting, default 5
+      const extensionMinutes = product.auto_extend_minutes || 10; // use product's setting, default 10
 
       const timeLeftMs = endsAt.getTime() - now.getTime();
-      if (timeLeftMs <= thresholdMinutes * 60 * 1000) {
+      if (timeLeftMs <= thresholdMinutes * 60 * 1000 && timeLeftMs > 0) {
         const newEndsAt = new Date(endsAt.getTime() + extensionMinutes * 60 * 1000);
         await productModel.updateEndsAt(product_id, newEndsAt);
       }

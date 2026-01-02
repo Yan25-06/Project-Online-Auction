@@ -79,4 +79,11 @@ export const ProductService = {
     limit: number = 20,
     statusFilter?: string
   ) => await productModel.getAllForAdmin(page, limit, statusFilter),
+
+  // Auto-extend settings
+  getAutoExtendSettings: async () =>
+    await productModel.getAutoExtendSettings(),
+
+  updateAutoExtendSettings: async (thresholdMinutes: number, extensionMinutes: number) =>
+    await productModel.updateAutoExtendSettings(thresholdMinutes, extensionMinutes),
 };
