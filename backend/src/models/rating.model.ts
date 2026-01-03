@@ -51,7 +51,7 @@ export const ratingModel = {
   },
 
   // Get ratings for a user
-  async findByUser(userId: string, page: number = 1, limit: number = 20): Promise<{ data: any[], total: number }> {
+  async findByUser(userId: string, page: number = 1, limit: number = 20): Promise<{ data: any[], total: number, positiveCount: number, negativeCount: number }> {
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await supabase
@@ -69,7 +69,26 @@ export const ratingModel = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return { data: data || [], total: count || 0 };
+
+    // Get positive and negative counts
+    const { count: positiveCount } = await supabase
+      .from('ratings')
+      .select('*', { count: 'exact', head: true })
+      .eq('rated_user_id', userId)
+      .eq('score', 'positive');
+
+    const { count: negativeCount } = await supabase
+      .from('ratings')
+      .select('*', { count: 'exact', head: true })
+      .eq('rated_user_id', userId)
+      .eq('score', 'negative');
+
+    return { 
+      data: data || [], 
+      total: count || 0,
+      positiveCount: positiveCount || 0,
+      negativeCount: negativeCount || 0
+    };
   },
 
   // Get rating by order and rater

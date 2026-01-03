@@ -70,7 +70,7 @@ const Header = () => {
             )}
             {/* Watchlist */}
             {watchList.length > 0 && (
-              <Link to="/user" className="flex items-center gap-1 text-sm font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
+              <Link to="/user?tab=favorites" className="flex items-center gap-1 text-sm font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
                 <Heart size={16} className="fill-red-600" /> {watchList.length}
               </Link>
             )}
