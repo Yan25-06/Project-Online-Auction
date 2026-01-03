@@ -44,7 +44,7 @@ const ProductCard = ({ product }) => {
         if (highestBid && highestBid.bidder_id) {
           const user = await UserService.getById(highestBid.bidder_id);
           const name = user.full_name || 'Người dùng';
-          setTopBidderName(maskName(name));
+          setTopBidderName(name);
         }
       } catch (error) {
         console.error("Lỗi lấy bidder:", error);

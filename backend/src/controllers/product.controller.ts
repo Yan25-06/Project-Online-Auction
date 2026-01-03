@@ -96,8 +96,6 @@ export const ProductController = {
   },
 
   create: async (req: Request, res: Response) => {
-    console.log("File nhận được:", (req as any).file);
-    console.log("Body nhận được:", req.body);
     try {
       const file = (req as any).file;
       const imageUrl = await uploadToStorage(file);
@@ -116,17 +114,11 @@ export const ProductController = {
     try {
       const id = req.params.id as string;
       const { description } = req.body;
-      console.log("Append description request:", {
-        id,
-        body: req.body,
-        user: (req as any).user,
-      });
       if (!description || typeof description !== "string")
         return res.status(400).json({ error: "description is required" });
       await ProductService.appendDescription(id, description);
       return res.status(204).send();
     } catch (err: any) {
-      console.error("Append description error:", err);
       return res.status(400).json({ error: err.message });
     }
   },

@@ -9,6 +9,7 @@ import { CategoryService, ProductService } from '../services/backendService';
 import { useToast } from '../components/common/Toast';
 import { Editor } from '@tinymce/tinymce-react';
 import Header from '../components/common/Header';
+import { useAuth } from '../context/AuthContext';
 
 const PostProductPage = () => {
   const navigate = useNavigate();
@@ -16,8 +17,7 @@ const PostProductPage = () => {
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
   const toast = useToast();
-
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { user } = useAuth();
   // State quản lý form
   const [formData, setFormData] = useState({
     name: '',
@@ -26,6 +26,7 @@ const PostProductPage = () => {
     stepPrice: '',
     buyNowPrice: '',
     endsAt: '',
+    allow_unrated_bidders: false,
   });
 
   // State riêng cho Description (Quill) và Images
@@ -157,6 +158,7 @@ const PostProductPage = () => {
       
       data.append('ends_at', formData.endsAt);
       data.append('description', description); 
+      data.append('allow_unrated_bidders', formData.allow_unrated_bidders);
       data.append('image', mainImage); // Ảnh chính
 
       // Tạo sản phẩm trước
@@ -173,10 +175,9 @@ const PostProductPage = () => {
       }
 
       toast.show('Đăng sản phẩm thành công!', { type: 'success' });
-      navigate('/seller/products');
+      navigate('/');
 
     } catch (err) {
-      console.error(err);
       setError(err.response?.data?.error || err.message || 'Có lỗi xảy ra khi đăng sản phẩm.');
       window.scrollTo(0, 0);
     } finally {
@@ -228,7 +229,6 @@ const PostProductPage = () => {
               <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <Gavel className="text-blue-600" /> Đăng bán sản phẩm đấu giá
               </h1>
-              <p className="text-sm text-gray-500 mt-1">Điền đầy đủ thông tin để sản phẩm được duyệt nhanh chóng.</p>
             </div>
             
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -336,6 +336,21 @@ const PostProductPage = () => {
                       <input type="number" name="buyNowPrice" value={formData.buyNowPrice} onChange={handleChange} className="w-full rounded-lg border-gray-300 border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Để trống nếu đấu giá thuần túy" min="0"/>
                     </div>
                 </div>
+              </div>
+
+              {/* Allow Unrated Bidders */}
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <input 
+                  type="checkbox" 
+                  id="allow_unrated_bidders" 
+                  name="allow_unrated_bidders" 
+                  checked={formData.allow_unrated_bidders} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, allow_unrated_bidders: e.target.checked }))} 
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                />
+                <label htmlFor="allow_unrated_bidders" className="cursor-pointer flex-1">
+                  <span className="text-sm font-medium text-gray-700">Cho phép người dùng chưa có đánh giá được đấu giá</span>
+                </label>
               </div>
 
               {/* Description (TinyMCE Editor) */}

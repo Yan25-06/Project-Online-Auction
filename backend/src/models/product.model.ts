@@ -141,10 +141,10 @@ export const productModel = {
       .eq("status", "active");
 
     if (query) {
-      queryBuilder = queryBuilder.textSearch("name", query, {
-        type: "websearch",
-        config: "english",
-      });
+      // Search in both name and description
+      queryBuilder = queryBuilder.or(
+        `name.wfts.${query},description.wfts.${query}`
+      );
     }
 
     if (categoryId) {
@@ -153,16 +153,17 @@ export const productModel = {
 
     // Apply sorting
     switch (sortBy) {
-      case "end_time_desc":
-        queryBuilder = queryBuilder.order("ends_at", { ascending: false });
+      case "ends_soon":
+        queryBuilder = queryBuilder.order("ends_at", { ascending: true });
         break;
       case "price_asc":
         queryBuilder = queryBuilder.order("current_price", { ascending: true });
         break;
       case "price_desc":
-        queryBuilder = queryBuilder.order("current_price", {
-          ascending: false,
-        });
+        queryBuilder = queryBuilder.order("current_price", { ascending: false, });
+        break;
+      case "most_bids":
+        queryBuilder = queryBuilder.order("bid_count", { ascending: false });
         break;
       default:
         queryBuilder = queryBuilder.order("created_at", { ascending: false });
