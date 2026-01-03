@@ -162,11 +162,9 @@ export const ProductController = {
       const isSeller = req.user?.id === sellerId;
 
       if (!isAdmin && !isSeller) {
-        return res
-          .status(403)
-          .json({
-            error: "You do not have permission to update this product price",
-          });
+        return res.status(403).json({
+          error: "You do not have permission to update this product price",
+        });
       }
 
       const updated = await ProductService.updatePriceAndBidCount(
@@ -210,6 +208,30 @@ export const ProductController = {
         statusFilter
       );
       return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // End a specific auction
+  endAuction: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string;
+      const result = await ProductService.endAuction(id);
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  },
+
+  // End all expired auctions (can be called by cron or manually)
+  endExpiredAuctions: async (req: Request, res: Response) => {
+    try {
+      const results = await ProductService.endExpiredAuctions();
+      return res.status(200).json({
+        message: `Ended ${results.length} auctions`,
+        results,
+      });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
