@@ -163,4 +163,10 @@ export const ProductService = {
 
     return results;
   },
+  // Auto-extend settings
+  getAutoExtendSettings: async () =>
+    await productModel.getAutoExtendSettings(),
+
+  updateAutoExtendSettings: async (thresholdMinutes: number, extensionMinutes: number) =>
+    await productModel.updateAutoExtendSettings(thresholdMinutes, extensionMinutes),
 };

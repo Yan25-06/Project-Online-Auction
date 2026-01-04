@@ -61,17 +61,18 @@ export const userModel = {
     return (user.positive_ratings / user.total_ratings) * 100;
   },
 
-  // Check if user can bid (rating > 80% or no ratings with seller permission)
+  // Check if user can bid (rating >= 80% or no ratings with seller permission)
+  // rating_score is stored as decimal (0.80 = 80%)
   async canBid(userId: string, allowUnrated: boolean = true): Promise<boolean> {
-    const percentage = await this.getRatingPercentage(userId);
     const user = await this.findById(userId);
     
     if (!user) return false;
     if (user.total_ratings === 0) return allowUnrated;
-    return percentage >= 80;
+    // rating_score is stored as decimal, so 80% = 0.80
+    return (user.rating_score || 0) >= 0.80;
   },
 
-  // Request upgrade to seller
+  // Request upgrade to seller (DB operation only - business logic in service)
   async requestUpgrade(id: string): Promise<User> {
     const { data, error } = await supabase
       .from('users')
@@ -118,12 +119,13 @@ export const userModel = {
     return data;
   },
 
-  // Reject upgrade request
+  // Reject upgrade request (save rejection timestamp for 7-day cooldown)
   async rejectUpgrade(id: string): Promise<User> {
     const { data, error } = await supabase
       .from('users')
       .update({ 
         upgrade_requested: false,
+        upgrade_rejected_at: new Date(),
         updated_at: new Date() 
       })
       .eq('id', id)

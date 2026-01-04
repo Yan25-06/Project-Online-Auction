@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { ProductService } from "../services/product.service.js";
 import { uploadToStorage } from "../services/storage.service.js";
+import { ProductImageService } from "../services/product-image.service.js";
 
 export const ProductController = {
   getAll: async (req: Request, res: Response) => {
@@ -95,8 +96,6 @@ export const ProductController = {
   },
 
   create: async (req: Request, res: Response) => {
-    console.log("File nhận được:", (req as any).file);
-    console.log("Body nhận được:", req.body);
     try {
       const file = (req as any).file;
       const imageUrl = await uploadToStorage(file);
@@ -115,17 +114,11 @@ export const ProductController = {
     try {
       const id = req.params.id as string;
       const { description } = req.body;
-      console.log("Append description request:", {
-        id,
-        body: req.body,
-        user: (req as any).user,
-      });
       if (!description || typeof description !== "string")
         return res.status(400).json({ error: "description is required" });
       await ProductService.appendDescription(id, description);
       return res.status(204).send();
     } catch (err: any) {
-      console.error("Append description error:", err);
       return res.status(400).json({ error: err.message });
     }
   },
@@ -231,6 +224,74 @@ export const ProductController = {
       return res.status(200).json({
         message: `Ended ${results.length} auctions`,
         results,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // Upload multiple images for a product
+  uploadImages: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No images provided" });
+      }
+
+      const images = await ProductImageService.uploadImages(id, files);
+      return res.status(201).json(images);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // Get all images for a product
+  getImages: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+      const images = await ProductImageService.getProductImages(id);
+      return res.status(200).json(images);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // Admin: Get auto-extend settings
+  getAutoExtendSettings: async (req: Request, res: Response) => {
+    try {
+      const settings = await ProductService.getAutoExtendSettings();
+      return res.status(200).json(settings);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // Admin: Update auto-extend settings for all active products
+  updateAutoExtendSettings: async (req: Request, res: Response) => {
+    try {
+      const { threshold_minutes, auto_extend_minutes } = req.body;
+      
+      if (typeof threshold_minutes !== 'number' || threshold_minutes < 1 || threshold_minutes > 60) {
+        return res.status(400).json({ error: "threshold_minutes phải từ 1 đến 60" });
+      }
+      if (typeof auto_extend_minutes !== 'number' || auto_extend_minutes < 1 || auto_extend_minutes > 60) {
+        return res.status(400).json({ error: "auto_extend_minutes phải từ 1 đến 60" });
+      }
+
+      const count = await ProductService.updateAutoExtendSettings(threshold_minutes, auto_extend_minutes);
+      return res.status(200).json({ 
+        success: true, 
+        message: `Đã cập nhật ${count} sản phẩm`,
+        updated: count,
+        threshold_minutes,
+        auto_extend_minutes
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

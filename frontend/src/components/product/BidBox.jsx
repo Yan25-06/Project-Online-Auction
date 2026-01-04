@@ -14,6 +14,7 @@ const BidBox = ({ product, onTopBidderChange }) => {
   const [isOwner, setIsOwner] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [rejectingBidId, setRejectingBidId] = useState(null);
+  const [ratingError, setRatingError] = useState(null); // Lưu thông báo lỗi về rating
   const toast = useToast();
 
   useEffect(() => {
@@ -38,15 +39,33 @@ const BidBox = ({ product, onTopBidderChange }) => {
           const response = await BlockedBidderService.isBlocked(product.id, currentUser.id);
           // API returns { blocked: true/false } or throws error if not blocked
           const blocked = response?.blocked === true;
-          console.log('ProductId:', product.id, 'UserId:', currentUser.id, 'Response:', response, 'isBlocked:', blocked);
           setIsBlocked(blocked);
         } catch (e) {
           // If API throws error, user is not blocked
-          console.log('Check block error (not blocked):', e.message);
           setIsBlocked(false);
+        }
+
+        // Check rating eligibility
+        try {
+          const userDetails = await UserService.getById(currentUser.id);
+          const totalRatings = userDetails?.total_ratings || 0;
+          const positiveRatings = userDetails?.positive_ratings || 0;
+          const ratingScore = userDetails?.rating_score || 0;
+          const allowUnrated = product.allow_unrated_bidders !== false; // default true
+
+          if (totalRatings === 0 && !allowUnrated) {
+            setRatingError('Người bán không cho phép bidder chưa có đánh giá tham gia đấu giá');
+          } else if (totalRatings > 0 && ratingScore < 0.80) {
+            setRatingError(`Điểm đánh giá của bạn là ${positiveRatings}/${totalRatings} (${(ratingScore * 100).toFixed(1)}%). Cần tối thiểu 80% để tham gia đấu giá`);
+          } else {
+            setRatingError(null);
+          }
+        } catch (e) {
+          setRatingError(null);
         }
       } else {
         setIsBlocked(false);
+        setRatingError(null);
       }
 
       try {
@@ -73,6 +92,11 @@ const BidBox = ({ product, onTopBidderChange }) => {
       const user = await AuthService.getCurrentUser();
       if (!user) throw new Error('Bạn cần đăng nhập để đặt giá');
 
+      // Check if bidder is blocked
+      if (isBlocked) {
+        throw new Error('Bạn đã bị chặn khỏi sản phẩm này. Không thể đặt giá.');
+      }
+
       const inc = product.bid_increment || 0;
       const minReq = (highestBid && highestBid.bid_amount) ? (highestBid.bid_amount + inc) : ((product.current_price || 0) + inc);
       const numeric = Number(bidAmount);
@@ -85,6 +109,7 @@ const BidBox = ({ product, onTopBidderChange }) => {
         bid_amount: numeric
       };
 
+      // Backend will validate rating requirement (80% threshold)
       const res = await BidService.create(payload);
 
       const fresh = await ProductService.getById(product.id);
@@ -173,6 +198,10 @@ const BidBox = ({ product, onTopBidderChange }) => {
         <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
           Bạn đã bị chặn khỏi sản phẩm này. Không thể đặt giá.
         </div>
+      ) : ratingError ? (
+        <div className="mb-4 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-800">
+          {ratingError}
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="col-span-1 flex items-center gap-2">
@@ -201,46 +230,60 @@ const BidBox = ({ product, onTopBidderChange }) => {
       )}
 
       <section className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <h4 className="text-md font-bold mb-3">Lịch sử đấu giá</h4>
-        <div className="">
-          <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-            {bidHistory.length > 0 ? (
-              bidHistory.map(item => (
-                <div 
-                  key={item.id} 
-                  className={`flex items-center justify-between p-2 border rounded-lg ${
-                    item.is_rejected ? 'bg-red-50 border-red-200 opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-700">
+        <h4 className="text-md font-bold mb-2">Xem lịch sử đấu giá của sản phẩm</h4>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 border-b border-gray-200">
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold text-gray-700">Thời điểm</th>
+                <th className="px-3 py-2 text-left font-semibold text-gray-700">Người mua</th>
+                <th className="px-3 py-2 text-right font-semibold text-gray-700">Giá</th>
+                {isOwner && <th className="px-3 py-2 text-center font-semibold text-gray-700 w-16"></th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {bidHistory.length > 0 ? (
+                bidHistory.map(item => (
+                  <tr 
+                    key={item.id} 
+                    className={`hover:bg-gray-50 ${item.is_rejected ? 'bg-red-50 opacity-60' : ''}`}
+                  >
+                    <td className="px-3 py-2 text-gray-600">{formatPostDate(item.created_at)}</td>
+                    <td className="px-3 py-2 text-gray-700">
                       {item.bidder_name}
                       {item.is_rejected && <span className="ml-2 text-xs text-red-600 font-semibold">[Từ chối]</span>}
-                    </div>
-                  </div>
-                  <div className="text-sm font-bold text-red-600">{formatCurrency(item.bid_amount)}</div>
-                  <div className="text-xs text-gray-400 ml-2">{formatPostDate(item.created_at)}</div>
-                  
-                  {isOwner && !item.is_rejected && (
-                    <button
-                      onClick={() => handleRejectBid(item)}
-                      disabled={rejectingBidId === item.id}
-                      className="ml-2 p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Từ chối lượt đấu giá này"
-                    >
-                      {rejectingBidId === item.id ? (
-                        <span className="text-xs">Đang xử lý...</span>
-                      ) : (
-                        <X size={16} />
-                      )}
-                    </button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">Chưa có lượt đấu giá nào.</div>
-            )}
-          </div>
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold text-red-600">{formatCurrency(item.bid_amount)}</td>
+                    {isOwner && (
+                      <td className="px-3 py-2 text-center">
+                        {!item.is_rejected && (
+                          <button
+                            onClick={() => handleRejectBid(item)}
+                            disabled={rejectingBidId === item.id}
+                            className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Từ chối lượt đấu giá này"
+                          >
+                            {rejectingBidId === item.id ? (
+                              <span className="text-xs">...</span>
+                            ) : (
+                              <X size={16} />
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={isOwner ? 4 : 3} className="px-3 py-8 text-center text-gray-500">
+                    Chưa có lượt đấu giá nào.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

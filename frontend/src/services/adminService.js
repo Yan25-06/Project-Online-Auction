@@ -116,5 +116,19 @@ export const AdminService = {
       const response = await apiClient.delete(`/products/${id}`);
       return response.data;
     },
+
+    // Auto-extend settings
+    getAutoExtendSettings: async () => {
+      const response = await apiClient.get("/products/admin/auto-extend");
+      return response.data;
+    },
+
+    updateAutoExtendSettings: async (thresholdMinutes, autoExtendMinutes) => {
+      const response = await apiClient.put("/products/admin/auto-extend", {
+        threshold_minutes: thresholdMinutes,
+        auto_extend_minutes: autoExtendMinutes,
+      });
+      return response.data;
+    },
   },
 };

@@ -23,6 +23,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUpgradeRequests from "./pages/admin/AdminUpgradeRequests";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminProducts from "./pages/admin/AdminProducts";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminRoute from "./components/AdminRoute";
 
 const router = createBrowserRouter(
@@ -86,6 +87,14 @@ const router = createBrowserRouter(
           element={
             <AdminRoute>
               <AdminProducts />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <AdminRoute>
+              <AdminSettings />
             </AdminRoute>
           }
         />

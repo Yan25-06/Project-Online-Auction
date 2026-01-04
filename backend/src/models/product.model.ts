@@ -141,10 +141,10 @@ export const productModel = {
       .eq("status", "active");
 
     if (query) {
-      queryBuilder = queryBuilder.textSearch("name", query, {
-        type: "websearch",
-        config: "english",
-      });
+      // Search in both name and description
+      queryBuilder = queryBuilder.or(
+        `name.wfts.${query},description.wfts.${query}`
+      );
     }
 
     if (categoryId) {
@@ -153,16 +153,17 @@ export const productModel = {
 
     // Apply sorting
     switch (sortBy) {
-      case "end_time_desc":
-        queryBuilder = queryBuilder.order("ends_at", { ascending: false });
+      case "ends_soon":
+        queryBuilder = queryBuilder.order("ends_at", { ascending: true });
         break;
       case "price_asc":
         queryBuilder = queryBuilder.order("current_price", { ascending: true });
         break;
       case "price_desc":
-        queryBuilder = queryBuilder.order("current_price", {
-          ascending: false,
-        });
+        queryBuilder = queryBuilder.order("current_price", { ascending: false, });
+        break;
+      case "most_bids":
+        queryBuilder = queryBuilder.order("bid_count", { ascending: false });
         break;
       default:
         queryBuilder = queryBuilder.order("created_at", { ascending: false });
@@ -395,5 +396,40 @@ export const productModel = {
 
     if (error) throw error;
     return { data: data || [], total: count || 0 };
+  },
+
+  // Get/Update auto-extend settings (threshold_minutes + auto_extend_minutes)
+  async getAutoExtendSettings(): Promise<{ threshold_minutes: number; auto_extend_minutes: number }> {
+    const { data, error } = await supabase
+      .from("products")
+      .select("threshold_minutes, auto_extend_minutes")
+      .eq("status", "active")
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      return { threshold_minutes: 5, auto_extend_minutes: 10 };
+    }
+    return {
+      threshold_minutes: data.threshold_minutes || 5,
+      auto_extend_minutes: data.auto_extend_minutes || 10,
+    };
+  },
+
+  async updateAutoExtendSettings(
+    thresholdMinutes: number,
+    extensionMinutes: number
+  ): Promise<number> {
+    const { data, error } = await supabase
+      .from("products")
+      .update({
+        threshold_minutes: thresholdMinutes,
+        auto_extend_minutes: extensionMinutes,
+      })
+      .eq("status", "active")
+      .select("id");
+
+    if (error) throw error;
+    return data?.length || 0;
   },
 };

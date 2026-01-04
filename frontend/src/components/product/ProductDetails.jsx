@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Home,
   ArrowRight,
+  Send,
 } from "lucide-react";
 // 1. Import thêm maskName
 import {
@@ -24,6 +25,7 @@ import {
   maskName,
 } from "../../utils/formatters";
 import { useWatchList } from "../../context/WatchListContext";
+import { useAuth } from "../../context/AuthContext";
 import SectionTitle from "./SectionTitle";
 import ProductCard from "./ProductCard";
 import ProductDescriptionSection from "./ProductDescriptionSection";
@@ -41,6 +43,7 @@ import { supabase } from "../../config/supabase";
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -48,10 +51,18 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState("");
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [additionalImages, setAdditionalImages] = useState([]);
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState("Chưa có");
   const [currentUser, setCurrentUser] = useState(null);
   const [order, setOrder] = useState(null);
+  const [topBidderRating, setTopBidderRating] = useState(null); // Rating info của bidder cao nhất
+  
+  // States cho phần hỏi đáp
+  const [newQuestion, setNewQuestion] = useState("");
+  const [askingQuestion, setAskingQuestion] = useState(false);
+  const [answeringId, setAnsweringId] = useState(null);
+  const [answerText, setAnswerText] = useState("");
 
   // States for appended description
   const [appendedDescriptions, setAppendedDescriptions] = useState([]);
@@ -94,6 +105,17 @@ const ProductDetails = () => {
         }
 
         ProductService.incrementView(id).catch(console.error);
+
+        // Load additional images from product_images table
+        try {
+          const imagesData = await ProductService.getImages(id);
+          if (imagesData && Array.isArray(imagesData)) {
+            setAdditionalImages(imagesData);
+          }
+        } catch (imgError) {
+          console.error("Lỗi tải ảnh phụ:", imgError);
+          setAdditionalImages([]);
+        }
 
         // Load appended descriptions from product_descriptions table
         if (
@@ -164,6 +186,7 @@ const ProductDetails = () => {
 
       if (!product.bid_count || product.bid_count === 0) {
         setTopBidderName("Chưa có");
+        setTopBidderRating(null);
         return;
       }
 
@@ -172,18 +195,76 @@ const ProductDetails = () => {
         // Kiểm tra kỹ cấu trúc trả về
         if (hb && hb.bidder_id) {
           const user = await UserService.getById(hb.bidder_id);
+          console.log("Lấy được bidder:", user);
           const name = user.full_name || "Người dùng";
-          // Mask tên để bảo mật
-          setTopBidderName(maskName(name));
+          setTopBidderName(name);
+          // Lưu rating info
+          setTopBidderRating({
+            rating_score: user.rating_score || 0,
+            positive_ratings: user.positive_ratings || 0,
+            total_ratings: user.total_ratings || 0
+          });
         }
       } catch (error) {
         console.error("Lỗi lấy bidder:", error);
         setTopBidderName("Ẩn danh");
+        setTopBidderRating(null);
       }
     };
 
     fetchTopBidder();
   }, [product]); // Chạy lại khi product thay đổi
+
+  // --- KIỂM TRA XEM USER CÓ PHẢI SELLER KHÔNG ---
+  const isSeller = useMemo(() => {
+    if (!user || !product) return false;
+    return user.id === product.seller_id;
+  }, [user, product]);
+
+  // --- HÀM ĐẶT CÂU HỎI ---
+  const handleAskQuestion = async () => {
+    if (!newQuestion.trim()) return;
+    if (!user) {
+      alert("Bạn cần đăng nhập để đặt câu hỏi");
+      return;
+    }
+    
+    try {
+      setAskingQuestion(true);
+      await QuestionService.create({
+        userId: user.id,
+        productId: id,
+        questionText: newQuestion.trim()
+      });
+      
+      // Reload questions
+      const questionsData = await QuestionService.findByProduct(id);
+      setQuestions(Array.isArray(questionsData) ? questionsData : questionsData.data || []);
+      setNewQuestion("");
+    } catch (err) {
+      console.error("Lỗi đặt câu hỏi:", err);
+      alert("Đặt câu hỏi thất bại. Vui lòng thử lại.");
+    } finally {
+      setAskingQuestion(false);
+    }
+  };
+
+  const handleAnswerQuestion = async (questionId) => {
+    if (!answerText.trim()) return;
+    
+    try {
+      await QuestionService.answer(questionId, user.id, answerText.trim());
+      
+      // Reload questions
+      const questionsData = await QuestionService.findByProduct(id);
+      setQuestions(Array.isArray(questionsData) ? questionsData : questionsData.data || []);
+      setAnsweringId(null);
+      setAnswerText("");
+    } catch (err) {
+      console.error("Lỗi trả lời:", err);
+      alert("Trả lời thất bại. Vui lòng thử lại.");
+    }
+  };
 
   // --- FETCH RELATED PRODUCTS ---
   useEffect(() => {
@@ -212,16 +293,26 @@ const ProductDetails = () => {
   // --- IMAGE HANDLING ---
   const allImages = useMemo(() => {
     if (!product) return [];
-    const mainImg = product.main_image_url || "https://via.placeholder.com/400";
+    const mainImg = product.main_image_url || "https://placehold.co/800?text=No%20Image&font=roboto";
     const images = [mainImg];
 
-    if (product.images && Array.isArray(product.images)) {
-      product.images.forEach((img) => {
+    // Add additional images from product_images table
+    if (additionalImages && Array.isArray(additionalImages)) {
+      additionalImages.forEach((img) => {
         if (img.image_url) images.push(img.image_url);
       });
     }
+
+    // Fallback: also check product.images if it exists (legacy support)
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((img) => {
+        if (img.image_url && !images.includes(img.image_url)) {
+          images.push(img.image_url);
+        }
+      });
+    }
     return images;
-  }, [product]);
+  }, [product, additionalImages]);
 
   useEffect(() => {
     if (allImages.length > 0) setActiveImage(allImages[0]);
@@ -259,7 +350,7 @@ const ProductDetails = () => {
   // Check if product has ended and show notice for non-participants
   const isProductEnded =
     product.status === "ended" || product.status === "sold";
-  const isSeller = currentUser && currentUser.id === product.seller_id;
+  // const isSeller = currentUser && currentUser.id === product.seller_id;
   const isWinner = order && currentUser && currentUser.id === order.winner_id;
   const showEndedNotice = isProductEnded && !isSeller && !isWinner;
 
@@ -439,11 +530,12 @@ const ProductDetails = () => {
                   <p className="font-bold text-sm text-gray-800">
                     {product.seller?.full_name || "Ẩn danh"}
                   </p>
-                  <div className="flex items-center gap-1 text-xs text-yellow-500">
-                    <Star size={10} fill="currentColor" />{" "}
-                    {product.seller?.rating_score || 0}{" "}
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className={`font-medium ${(product.seller?.rating_score || 0) >= 0.80 ? 'text-green-600' : (product.seller?.rating_score || 0) >= 0.50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {product.seller?.positive_ratings || 0}+/{(product.seller?.total_ratings || 0) - (product.seller?.positive_ratings || 0)}-
+                    </span>
                     <span className="text-gray-400">
-                      ({product.seller?.total_ratings || 0} đánh giá)
+                      ({((product.seller?.rating_score || 0) * 100).toFixed(0)}%)
                     </span>
                   </div>
                 </div>
@@ -460,8 +552,19 @@ const ProductDetails = () => {
                     {topBidderName}
                   </p>
 
-                  <div className="flex items-center gap-1 text-xs text-yellow-500">
-                    {product.bid_count || 0} lượt đấu giá
+                  <div className="flex items-center gap-1 text-xs">
+                    {topBidderRating ? (
+                      <>
+                        <span className={`font-medium ${topBidderRating.rating_score >= 0.80 ? 'text-green-600' : topBidderRating.rating_score >= 0.50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {topBidderRating.positive_ratings}+/{topBidderRating.total_ratings - topBidderRating.positive_ratings}-
+                        </span>
+                        <span className="text-gray-400">
+                          ({(topBidderRating.rating_score * 100).toFixed(0)}%) • {product.bid_count || 0} lượt
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">0+/0- (0%) • {product.bid_count || 0} lượt</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -501,26 +604,61 @@ const ProductDetails = () => {
 
           <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
-              <span>Lịch sử Hỏi đáp</span>
+              <span>Hỏi đáp về sản phẩm</span>
               <span className="text-sm font-normal text-gray-500">
                 {questions.length} câu hỏi
               </span>
             </h3>
 
-            <div className="space-y-6">
+            {/* Form đặt câu hỏi - chỉ hiện khi đã đăng nhập và không phải seller */}
+            {user && !isSeller && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <p className="text-sm font-medium text-blue-800 mb-2">
+                  💬 Đặt câu hỏi cho người bán
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    placeholder="Nhập câu hỏi của bạn..."
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAskQuestion()}
+                  />
+                  <button
+                    onClick={handleAskQuestion}
+                    disabled={askingQuestion || !newQuestion.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  >
+                    <Send size={16} />
+                    {askingQuestion ? 'Đang gửi...' : 'Gửi'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Thông báo cho seller */}
+            {isSeller && (
+              <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-100 text-sm text-green-700">
+                🏪 Bạn là người bán. Hãy trả lời các câu hỏi từ người mua!
+              </div>
+            )}
+
+            {/* Danh sách câu hỏi */}
+            <div className="space-y-4">
               {questions.length > 0 ? (
                 questions.map((q) => (
                   <div key={q.id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                        {(q.user?.full_name || "U").charAt(0)}
+                    {/* Câu hỏi */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
+                        {(q.user?.full_name || "U").charAt(0).toUpperCase()}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-bold text-gray-800">
                           {q.user?.full_name || "Người dùng"}
-                          <span className="text-xs font-normal text-gray-400">
-                            {" "}
-                            • {formatPostDate(q.created_at)}
+                          <span className="text-xs font-normal text-gray-400 ml-2">
+                            {formatPostDate(q.created_at)}
                           </span>
                         </p>
                         <p className="text-sm text-gray-700 mt-1">
@@ -528,23 +666,85 @@ const ProductDetails = () => {
                         </p>
                       </div>
                     </div>
-                    {q.answer && (
-                      <div className="ml-11 mt-2 pl-3 border-l-2 border-green-300">
-                        <p className="text-xs font-bold text-green-700 mb-1">
-                          Người bán trả lời:
-                        </p>
-                        <p className="text-sm text-gray-600">{q.answer}</p>
+
+                    {/* Câu trả lời - hiển thị từ bảng answers */}
+                    {q.answers && q.answers.length > 0 ? (
+                      q.answers.map((ans) => (
+                        <div key={ans.id} className="ml-11 mt-3 pl-3 border-l-2 border-green-400">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs font-bold">
+                              {(ans.seller?.full_name || "S").charAt(0).toUpperCase()}
+                            </div>
+                            <p className="text-xs font-bold text-green-700">
+                              {ans.seller?.full_name || "Người bán"}
+                              <span className="font-normal text-gray-400 ml-2">
+                                {formatPostDate(ans.created_at)}
+                              </span>
+                            </p>
+                          </div>
+                          <p className="text-sm text-gray-600 ml-8">{ans.answer_text}</p>
+                        </div>
+                      ))
+                    ) : (
+                      /* Form trả lời - chỉ hiện cho seller và câu hỏi chưa được trả lời */
+                      isSeller && !q.is_answered && (
+                        answeringId === q.id ? (
+                          <div className="ml-11 mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <textarea
+                              value={answerText}
+                              onChange={(e) => setAnswerText(e.target.value)}
+                              placeholder="Nhập câu trả lời..."
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none"
+                              rows={2}
+                            />
+                            <div className="flex justify-end gap-2 mt-2">
+                              <button
+                                onClick={() => {
+                                  setAnsweringId(null);
+                                  setAnswerText("");
+                                }}
+                                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                onClick={() => handleAnswerQuestion(q.id)}
+                                disabled={!answerText.trim()}
+                                className="px-4 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                              >
+                                Gửi trả lời
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setAnsweringId(q.id)}
+                            className="ml-11 mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                          >
+                            <MessageCircle size={14} /> Trả lời câu hỏi này
+                          </button>
+                        )
+                      )
+                    )}
+
+                    {/* Badge chưa trả lời */}
+                    {!q.is_answered && (!q.answers || q.answers.length === 0) && !isSeller && (
+                      <div className="ml-11 mt-2">
+                        <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                          ⏳ Đang chờ trả lời
+                        </span>
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-gray-500">
+                <div className="text-center py-8 text-gray-500">
                   <MessageCircle
-                    size={32}
-                    className="mx-auto mb-2 opacity-30"
+                    size={40}
+                    className="mx-auto mb-3 opacity-30"
                   />
-                  <p>Chưa có câu hỏi nào. Hãy là người đầu tiên đặt câu hỏi!</p>
+                  <p className="font-medium">Chưa có câu hỏi nào</p>
+                  <p className="text-sm mt-1">Hãy là người đầu tiên đặt câu hỏi cho người bán!</p>
                 </div>
               )}
             </div>

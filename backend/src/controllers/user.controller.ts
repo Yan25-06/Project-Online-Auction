@@ -5,7 +5,8 @@ export const UserController = {
   getById: async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
-      const user = await UserService.findById(id);
+      const currentUserId = (req as any).user?.id;
+      const user = await UserService.findById(id, currentUserId);
       if (!user) return res.status(404).json({ error: "User not found" });
       return res.status(200).json(user);
     } catch (err: any) {
@@ -59,8 +60,12 @@ export const UserController = {
 
   requestUpgrade: async (req: Request, res: Response) => {
     try {
-      const id = req.params.id as string;
-      const updated = await UserService.requestUpgrade(id);
+      // Lấy userId từ auth token thay vì params
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Bạn cần đăng nhập để thực hiện chức năng này' });
+      }
+      const updated = await UserService.requestUpgrade(userId);
       return res.status(200).json(updated);
     } catch (err: any) {
       return res.status(400).json({ error: err.message });

@@ -121,6 +121,17 @@ export const ProductService = {
     const response = await apiClient.post("/products/auctions/end-expired");
     return response.data;
   },
+  uploadImages: async (id, formData) => {
+    const response = await apiClient.post(`/products/${id}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  getImages: async (id) => {
+    const response = await apiClient.get(`/products/${id}/images`);
+    return response.data;
+  }
 };
 
 export const CategoryService = {
@@ -365,18 +376,14 @@ export const QuestionService = {
     return response.data;
   },
 
-  answer: async (id, answer) => {
-    const response = await apiClient.patch(`/questions/${id}/answer`, {
-      answer,
-    });
+  // Trả lời câu hỏi - sửa lại để gửi đúng format
+  answer: async (questionId, sellerId, answerText) => {
+    const response = await apiClient.post(`/questions/${questionId}/answer`, { sellerId, answerText });
     return response.data;
   },
 
   getUnansweredBySeller: async (sellerId, page = 1, limit = 20) => {
-    const response = await apiClient.get(
-      `/questions/seller/${sellerId}/unanswered`,
-      { params: { page, limit } }
-    );
+    const response = await apiClient.get(`/questions/unanswered/${sellerId}`, { params: { page, limit } });
     return response.data;
   },
 };
@@ -435,8 +442,9 @@ export const UserService = {
     return response.data;
   },
 
-  requestUpgrade: async () => {
-    const response = await apiClient.post("/users/request-upgrade");
+  // userId được truyền từ frontend (lấy từ AuthContext)
+  requestUpgrade: async (userId) => {
+    const response = await apiClient.post(`/users/${userId}/request-upgrade`);
     return response.data;
   },
 

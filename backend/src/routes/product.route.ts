@@ -13,6 +13,19 @@ productRouter.get(
   requireRole("admin"),
   ProductController.getAllForAdmin
 );
+// Admin: auto-extend settings
+productRouter.get(
+  "/admin/auto-extend",
+  requireAuth,
+  requireRole("admin"),
+  ProductController.getAutoExtendSettings
+);
+productRouter.put(
+  "/admin/auto-extend",
+  requireAuth,
+  requireRole("admin"),
+  ProductController.updateAutoExtendSettings
+);
 productRouter.get("/search", ProductController.search);
 productRouter.get("/ending-soon", ProductController.endingSoon);
 productRouter.get("/most-bids", ProductController.mostBids);
@@ -79,6 +92,15 @@ productRouter.post(
   "/auctions/end-expired",
   ProductController.endExpiredAuctions
 );
+// Product images routes
+productRouter.post(
+  "/:id/images",
+  requireAuth,
+  requireRole("seller"),
+  upload.array("images", 5), // Max 5 images
+  ProductController.uploadImages
+);
+productRouter.get("/:id/images", ProductController.getImages);
 
 productRouter.get("/:id", ProductController.getById);
 

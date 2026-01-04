@@ -1,4 +1,3 @@
-import { is } from 'drizzle-orm';
 import { bidModel } from '../models/bid.model.js';
 import { productModel } from '../models/product.model.js';
 import { userModel } from '../models/user.model.js';
@@ -41,8 +40,9 @@ export const BidService = {
       throw new Error('Sellers cannot bid on their own product');
     }
 
+    const allowUnrated = product.allow_unrated_bidders !== false;
     // Check bidder rating / permission to bid
-    const canBid = await userModel.canBid(bidder_id);
+    const canBid = await userModel.canBid(bidder_id, allowUnrated);
     if (!canBid) {
       try {
         const bidder = await userModel.findById(bidder_id);
@@ -58,6 +58,19 @@ export const BidService = {
       }
 
       throw new Error('Your rating is too low to place bids');
+    }
+    
+    if (!canBid) {
+      const bidder = await userModel.findById(bidder_id);
+      const totalRatings = bidder?.total_ratings || 0;
+      const positiveRatings = bidder?.positive_ratings || 0;
+      const ratingScore = bidder?.rating_score || 0;
+      
+      if (totalRatings === 0) {
+        throw new Error('Người bán không cho phép bidder chưa có đánh giá tham gia đấu giá');
+      } else {
+        throw new Error(`Điểm đánh giá của bạn là ${positiveRatings}/${totalRatings} (${(ratingScore * 100).toFixed(1)}%). Cần tối thiểu 80% để tham gia đấu giá`);
+      }
     }
 
     // Check bid step/increment and amount greater than current price
@@ -76,15 +89,15 @@ export const BidService = {
     // Update product price and bid count
     await productModel.updatePriceAndBidCount(product_id, bid_amount);
 
-    // Auto-extend auction if bid placed within the final 5 minutes -> add 10 minutes
+    // Auto-extend auction if bid placed within threshold time before end
     try {
       const now = new Date();
       const endsAt = new Date(product.ends_at);
-      const thresholdMinutes = 5; // fixed 5 minutes threshold
-      const extensionMinutes = 10; // fixed 10 minutes extension
+      const thresholdMinutes = product.threshold_minutes || 5; // use product's setting, default 5
+      const extensionMinutes = product.auto_extend_minutes || 10; // use product's setting, default 10
 
       const timeLeftMs = endsAt.getTime() - now.getTime();
-      if (timeLeftMs <= thresholdMinutes * 60 * 1000) {
+      if (timeLeftMs <= thresholdMinutes * 60 * 1000 && timeLeftMs > 0) {
         const newEndsAt = new Date(endsAt.getTime() + extensionMinutes * 60 * 1000);
         await productModel.updateEndsAt(product_id, newEndsAt);
       }
@@ -143,8 +156,28 @@ export const BidService = {
     return await bidModel.findByProduct(productId);
   },
 
-  getHistory: async (productId: string, isSeller: boolean) => {
-    return await bidModel.getBidHistory(productId, isSeller);
+  getHistory: async (productId: string, isSeller: boolean = false) => {
+    const data = await bidModel.getBidHistory(productId);
+
+    // Filter out rejected bids for non-sellers
+    const filteredData = isSeller ? data : data.filter(bid => !bid.is_rejected);
+
+    // Mask bidder names for non-sellers, show full name for sellers
+    return filteredData.map(bid => {
+      // Handle both object and array format from Supabase
+      const fullName = Array.isArray(bid.bidder) 
+        ? bid.bidder[0]?.full_name 
+        : bid.bidder?.full_name;
+
+      return {
+        ...bid,
+        bidder_name: fullName
+          ? isSeller
+            ? fullName
+            : `****${fullName.slice(-4)}`
+          : '****'
+      };
+    });
   },
 
   getHighestBid: async (productId: string) => {
