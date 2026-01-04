@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BidService, RatingService, OrderService } from '../../services/backendService';
 
@@ -134,9 +135,9 @@ const WonProducts = () => {
         <div className="space-y-6">
           {currentBids.map(bid => (
             <div key={bid.id} className="border rounded-lg p-4">
-              <div className="flex justify-between mb-4">
+              <Link to={`/my-orders`} className="flex justify-between mb-4">
                 <div className="flex gap-4">
-                  <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                  <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden shrink-0">
                     {bid.product?.main_image_url ? (
                       <img 
                         src={bid.product.main_image_url} 
@@ -167,7 +168,7 @@ const WonProducts = () => {
                     Đã thắng
                   </span>
                 </div>
-              </div>
+              </Link>
 
               {/* Form đánh giá người bán - Only show if order exists */}
               {orders[bid.product.id] ? (
