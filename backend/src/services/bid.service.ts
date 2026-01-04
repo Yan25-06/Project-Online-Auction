@@ -2,6 +2,7 @@ import { is } from 'drizzle-orm';
 import { bidModel } from '../models/bid.model.js';
 import { productModel } from '../models/product.model.js';
 import { userModel } from '../models/user.model.js';
+import { EmailService } from './email.service.js';
 
 export const BidService = {
   create: async (bidData: any) => {
@@ -9,7 +10,23 @@ export const BidService = {
 
     // Check if bidder is blocked
     const isBlocked = await bidModel.isBidderBlocked(product_id, bidder_id);
-    if (isBlocked) throw new Error('Bidder is blocked for this product');
+    if (isBlocked) {
+      try {
+        const bidder = await userModel.findById(bidder_id);
+        const productForEmail = await productModel.findById(product_id);
+        if (bidder && bidder.email) {
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+          const productUrl = frontendUrl ? `${frontendUrl}/products/${productForEmail?.id}` : '';
+          const subject = `You are blocked from bidding on "${productForEmail?.name || 'this product'}"`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>You are blocked from placing bids on <a href="${productUrl}">${productForEmail?.name || 'this product'}</a>. If you think this is a mistake, please contact support.</p>`;
+          await EmailService.sendMail(bidder.email, subject, html);
+        }
+      } catch (e) {
+        console.warn('Failed to send blocked notification email:', e);
+      }
+
+      throw new Error('Bidder is blocked for this product');
+    }
 
     // Check product exists and auction active
     const product = await productModel.findById(product_id);
@@ -26,7 +43,22 @@ export const BidService = {
 
     // Check bidder rating / permission to bid
     const canBid = await userModel.canBid(bidder_id);
-    if (!canBid) throw new Error('Your rating is too low to place bids');
+    if (!canBid) {
+      try {
+        const bidder = await userModel.findById(bidder_id);
+        if (bidder && bidder.email) {
+          const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+          const productUrl = frontendUrl ? `${frontendUrl}/products/${product.id}` : '';
+          const subject = `Bid denied for "${product.name}"`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>Your attempt to place a bid of <strong>${bid_amount}</strong> on <a href="${productUrl}">${product.name}</a> was denied because your account's rating is too low to place bids. If you believe this is an error, please contact support.</p>`;
+          await EmailService.sendMail(bidder.email, subject, html);
+        }
+      } catch (e) {
+        console.warn('Failed to send bid denial email:', e);
+      }
+
+      throw new Error('Your rating is too low to place bids');
+    }
 
     // Check bid step/increment and amount greater than current price
     const highest = await bidModel.getHighestBid(product_id);
@@ -59,6 +91,49 @@ export const BidService = {
     } catch (e) {
       // don't block bid creation if extension fails; log or ignore
       console.warn('Failed to auto-extend auction:', e);
+    }
+
+    // Send email notifications (bidder confirmation, previous highest bidder outbid, seller notification)
+    try {
+      // Fetch involved users
+      const bidder = await userModel.findById(bidder_id);
+      const seller = product.seller || (product.seller_id ? await userModel.findById(product.seller_id) : null);
+      const previousHighest = highest; // fetched before creating the new bid
+      const previousBidder = previousHighest?.bidder_id ? await userModel.findById(previousHighest.bidder_id) : null;
+
+      const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+      const productUrl = frontendUrl ? `${frontendUrl}/products/${product.id}` : ''; 
+
+      const mailPromises: Promise<any>[] = [];
+
+      // Bidder confirmation
+      if (bidder && bidder.email) {
+        const subject = `Your bid for "${product.name}" is placed`;
+        const html = `<p>Hi ${bidder.full_name || 'there'},</p>
+          <p>Your bid of <strong>${bid_amount}</strong> for <a href="${productUrl}">${product.name}</a> has been placed successfully.</p>`;
+        mailPromises.push(EmailService.sendMail(bidder.email, subject, html));
+      }
+
+      // Notify previous highest bidder if they exist and are different from the new bidder
+      if (previousBidder && previousBidder.email && previousBidder.id !== bidder_id) {
+        const subject = `You were outbid on "${product.name}"`;
+        const html = `<p>Hi ${previousBidder.full_name || 'there'},</p>
+          <p>Your previous bid of <strong>${previousHighest?.bid_amount || ''}</strong> has been outbid by ${bidder?.full_name || 'another bidder'} with <strong>${bid_amount}</strong> on <a href="${productUrl}">${product.name}</a>.</p>`;
+        mailPromises.push(EmailService.sendMail(previousBidder.email, subject, html));
+      }
+
+      // Notify seller
+      if (seller && seller.email) {
+        const subject = `New bid on your product "${product.name}"`;
+        const html = `<p>Hi ${seller.full_name || 'there'},</p>
+          <p>Your product <a href="${productUrl}">${product.name}</a> received a new bid of <strong>${bid_amount}</strong> by ${bidder?.full_name || 'a bidder'}.</p>`;
+        mailPromises.push(EmailService.sendMail(seller.email, subject, html));
+      }
+
+      // Send in parallel but don't fail bid creation if email fails
+      await Promise.allSettled(mailPromises);
+    } catch (e) {
+      console.warn('Failed to send bid notification emails:', e);
     }
 
     return bid;
