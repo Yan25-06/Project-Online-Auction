@@ -105,7 +105,10 @@ export const bidModel = {
       .from('bids')
       .select(`
         *,
-        product:products(*)
+        product:products(
+          *,
+          seller:users!products_seller_id_fkey(id, full_name, email)
+        )
       `)
       .eq('bidder_id', bidderId)
       .eq('is_rejected', false);

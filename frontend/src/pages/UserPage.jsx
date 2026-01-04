@@ -1,12 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
 import { Home, ChevronRight, Shield, Store, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { UserService, WatchlistService, RatingService, BidService } from '../services/backendService';
+import { UserService, BidService } from '../services/backendService';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Home, ChevronRight, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import ProductCard from '../components/product/ProductCard';
 import { useWatchList } from '../context/WatchListContext';
-import { AuthService } from '../services/authService';
-import { formatCurrency } from '../utils/formatters';
+import ProfileSettings from '../components/user/ProfileSettings';
+import MyRatings from '../components/user/MyRatings';
+import FavoriteProducts from '../components/user/FavoriteProducts';
+import BiddingProducts from '../components/user/BiddingProducts';
+import WonProducts from '../components/user/WonProducts';
+import MyProducts from '../components/user/MyProducts';
+import UnansweredQuestions from '../components/user/UnansweredQuestions';
+import BlockedBidders from '../components/user/BlockedBidders';
+import TabButton from '../components/user/TabButton';
+
 // Icon đơn giản (dùng text hoặc icon library tùy bạn)
 const IconUser = () => <span>👤</span>;
 const IconLock = () => <span>🔒</span>;
@@ -15,13 +23,25 @@ const IconGavel = () => <span>🔨</span>;
 const IconTrophy = () => <span>🏆</span>;
 const IconStar = () => <span>⭐</span>;
 const IconStore = () => <span>🏪</span>;
+const IconPackage = () => <span>📦</span>;
+const IconQuestion = () => <span>❓</span>;
+const IconBlock = () => <span>🚫</span>;
 
 const UserPage = () => {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'profile');
   const { user } = useAuth();
   const { watchList } = useWatchList();
   const [title, setTitle] = useState('Trang cá nhân');
   const [profile, setProfile] = useState(null);
+  
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
   
 
   useEffect(() => {
@@ -59,11 +79,17 @@ const UserPage = () => {
           }
         }} />;
       case 'favorites':
-        return <FavoriteProducts watchList={watchList}/>;
+        return <FavoriteProducts watchList={watchList} />;
       case 'bidding':
         return <BiddingProducts />;
       case 'won':
         return <WonProducts />;
+      case 'my-products':
+        return <MyProducts />;
+      case 'questions':
+        return <UnansweredQuestions />;
+      case 'blocked':
+        return <BlockedBidders />;
       default:
         return <ProfileSettings />;
     }
@@ -129,16 +155,30 @@ const UserPage = () => {
               <TabButton id="upgrade" label="Đăng ký bán hàng" icon={<IconStore />} activeTab={activeTab} setActiveTab={setActiveTab} />
             )}
             
+            {/* Bidder Section */}
             <div className="border-t my-2"></div>
+            <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Người mua</div>
             <TabButton id="favorites" label="Sản phẩm yêu thích" icon={<IconHeart />} activeTab={activeTab} setActiveTab={setActiveTab} />
             <TabButton id="bidding" label="Đang đấu giá" icon={<IconGavel />} activeTab={activeTab} setActiveTab={setActiveTab} />
             <TabButton id="won" label="Sản phẩm đã thắng" icon={<IconTrophy />} activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            {/* Seller Section - Only show for sellers */}
+            {profile?.role === 'seller' && (
+              <>
+                <div className="border-t my-2"></div>
+                <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Người bán</div>
+                <TabButton id="my-products" label="Sản phẩm của tôi" icon={<IconPackage />} activeTab={activeTab} setActiveTab={setActiveTab} />
+                <TabButton id="questions" label="Câu hỏi chưa trả lời" icon={<IconQuestion />} activeTab={activeTab} setActiveTab={setActiveTab} />
+                <TabButton id="blocked" label="Danh sách chặn" icon={<IconBlock />} activeTab={activeTab} setActiveTab={setActiveTab} />
+              </>
+            )}
             
             {/* Admin Panel - Only show for admin users */}
             {profile?.role === 'admin' && (
               <>
                 <div className="border-t my-2"></div>
-                <Link to="/admin" className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors bg-linear-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 text-purple-700 font-medium border border-purple-200">
+                <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Quản trị</div>
+                <Link to="/admin" className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 text-purple-700 font-medium border border-purple-200">
                   <Shield size={18} />
                   <span>Trang quản trị</span>
                 </Link>

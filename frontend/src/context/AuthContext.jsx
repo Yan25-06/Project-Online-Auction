@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
     const lastAccessToken = useRef(null);
+    const lastUserId = useRef(null);
 
     useEffect(() => {
         // 1. Kiểm tra session ngay khi App vừa load (để giữ đăng nhập khi F5)
@@ -18,6 +19,8 @@ export const AuthProvider = ({ children }) => {
                 setUser(session?.user ?? null);
                 if (session?.access_token)
                     lastAccessToken.current = session.access_token;
+                if (session?.user?.id)
+                    lastUserId.current = session.user.id;
             } catch (error) {
                 console.error("Lỗi check session:", error);
             } finally {
@@ -31,14 +34,25 @@ export const AuthProvider = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
                 // console.log("Auth event:", event, session); // Bật lên nếu muốn debug
-                if (event === 'SIGNED_IN' && session?.access_token === lastAccessToken.current) {
+                
+                // Prevent unnecessary re-renders when tab refocuses
+                if (session?.user?.id === lastUserId.current && 
+                    session?.access_token === lastAccessToken.current) {
                     // console.log("Tab focus detected - Skipping re-render");
                     return; 
                 }
-                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+                
+                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
                     setSession(session);
                     setUser(session?.user ?? null);
                     setLoading(false);
+                    
+                    if (session?.access_token) {
+                        lastAccessToken.current = session.access_token;
+                    }
+                    if (session?.user?.id) {
+                        lastUserId.current = session.user.id;
+                    }
                 }
             }
         );

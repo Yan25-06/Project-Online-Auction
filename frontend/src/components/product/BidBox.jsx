@@ -4,7 +4,7 @@ import { formatCurrency, formatPostDate, maskName } from '../../utils/formatters
 import { BidService, ProductService, UserService, BlockedBidderService } from '../../services/backendService';
 import { AuthService } from '../../services/authService';
 import { useToast } from '../common/Toast';
-import { is } from 'drizzle-orm';
+// import { is } from 'drizzle-orm';
 
 const BidBox = ({ product, onTopBidderChange }) => {
   const [bidAmount, setBidAmount] = useState('');
