@@ -44,9 +44,26 @@ productRouter.patch(
   requireRole("admin"),
   ProductController.updatePrice
 );
-productRouter.post("/", requireAuth, requireRole('seller'), upload.single('image'), ProductController.create);
-productRouter.post("/:id/description", requireAuth, requireRole('seller'), requireFields('description'), ProductController.appendDescription);
-productRouter.patch("/:id/status", requireAuth, requireRole(['seller','admin']), ProductController.updateStatus);
+productRouter.post(
+  "/",
+  requireAuth,
+  requireRole("seller"),
+  upload.single("image"),
+  ProductController.create
+);
+productRouter.post(
+  "/:id/description",
+  requireAuth,
+  requireRole("seller"),
+  requireFields("description"),
+  ProductController.appendDescription
+);
+productRouter.patch(
+  "/:id/status",
+  requireAuth,
+  requireRole(["seller", "admin"]),
+  ProductController.updateStatus
+);
 productRouter.patch("/:id/price", requireAuth, ProductController.updatePrice);
 productRouter.patch("/:id/view", ProductController.incrementView);
 productRouter.delete(
@@ -55,6 +72,14 @@ productRouter.delete(
   requireRole(["seller", "admin"]),
   ProductController.delete
 );
+
+// Auction ending endpoints
+productRouter.post("/:id/end-auction", ProductController.endAuction);
+productRouter.post(
+  "/auctions/end-expired",
+  ProductController.endExpiredAuctions
+);
+
 productRouter.get("/:id", ProductController.getById);
 
 export { productRouter };

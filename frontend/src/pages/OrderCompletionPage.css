@@ -1,0 +1,306 @@
+.order-completion-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.order-completion-page h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.product-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.product-info h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.product-info p {
+  margin: 8px 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.status-pending_payment {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.status-paid {
+  color: #3498db;
+  font-weight: bold;
+}
+
+.status-shipped {
+  color: #9b59b6;
+  font-weight: bold;
+}
+
+.status-delivered {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.status-completed {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.status-cancelled {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.product-ended-notice {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.product-ended-notice h2 {
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.product-ended-notice button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.product-ended-notice button:hover {
+  background: #2980b9;
+}
+
+.cancelled-notice {
+  background: #ffe6e6;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+  margin-bottom: 20px;
+}
+
+.cancelled-notice h3 {
+  color: #c0392b;
+  margin-bottom: 10px;
+}
+
+.cancelled-notice p {
+  color: #555;
+  margin: 5px 0;
+}
+
+.order-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.step.active {
+  border-color: #3498db;
+  background: #f0f8ff;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+}
+
+.step.completed {
+  border-color: #2ecc71;
+  background: #f0fff4;
+}
+
+.step h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.step-form input,
+.step-form textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.step-form input:focus,
+.step-form textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.step-form select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.step-form button {
+  padding: 12px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.step-form button:hover {
+  background: #2980b9;
+}
+
+.step-form button:active {
+  transform: translateY(1px);
+}
+
+.step-info {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.step-info p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.step-info a {
+  color: #3498db;
+  text-decoration: none;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.step-info a:hover {
+  text-decoration: underline;
+}
+
+.rating-section {
+  margin-top: 15px;
+}
+
+.my-rating,
+.other-rating {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.my-rating p,
+.other-rating p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.rating-note {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.cancel-section {
+  background: #fff5f5;
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.cancel-section h3 {
+  color: #c0392b;
+  margin-bottom: 10px;
+}
+
+.cancel-section .warning {
+  background: #ffe6e6;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.cancel-section textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin: 10px 0;
+  box-sizing: border-box;
+}
+
+.cancel-section textarea:focus {
+  outline: none;
+  border-color: #e74c3c;
+}
+
+.cancel-button {
+  padding: 12px 24px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.cancel-button:hover {
+  background: #c0392b;
+}
+
+.cancel-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+  .order-completion-page {
+    padding: 15px;
+  }
+
+  .order-completion-page h1 {
+    font-size: 1.5rem;
+  }
+
+  .step h3 {
+    font-size: 1.1rem;
+  }
+}

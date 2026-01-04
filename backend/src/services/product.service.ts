@@ -1,4 +1,6 @@
 import { productModel } from "../models/product.model.js";
+import { bidModel } from "../models/bid.model.js";
+import { orderModel } from "../models/order.model.js";
 
 export const ProductService = {
   getAll: async (sort?: string, order?: string, limit: number = 5) => {
@@ -79,4 +81,86 @@ export const ProductService = {
     limit: number = 20,
     statusFilter?: string
   ) => await productModel.getAllForAdmin(page, limit, statusFilter),
+
+  // End auction and create order if there's a winner
+  endAuction: async (productId: string) => {
+    const product = await productModel.findById(productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    // Check if auction has actually ended
+    const now = new Date();
+    const endsAt = new Date(product.ends_at);
+    if (endsAt > now) {
+      throw new Error("Auction has not ended yet");
+    }
+
+    // Check if already ended
+    if (product.status === "ended" || product.status === "sold") {
+      return { product, order: null, message: "Auction already ended" };
+    }
+
+    // Get highest bid
+    const highestBid = await bidModel.getHighestBid(productId);
+
+    let order = null;
+    let newStatus: "ended" | "sold" = "ended";
+
+    if (highestBid && highestBid.bid_amount >= product.starting_price) {
+      // There's a valid winner, create order
+      newStatus = "sold";
+      order = await orderModel.create(
+        productId,
+        product.seller_id,
+        highestBid.bidder_id,
+        highestBid.bid_amount
+      );
+    }
+
+    // Update product status
+    const updatedProduct = await productModel.updateStatus(
+      productId,
+      newStatus
+    );
+
+    return {
+      product: updatedProduct,
+      order,
+      message: order
+        ? "Auction ended with winner"
+        : "Auction ended without winner",
+    };
+  },
+
+  // Check and end all expired auctions
+  endExpiredAuctions: async () => {
+    const { data: expiredProducts } = await productModel.search(
+      "",
+      undefined,
+      "ends_at",
+      1,
+      100
+    );
+
+    const now = new Date();
+    const results = [];
+
+    for (const product of expiredProducts || []) {
+      const endsAt = new Date(product.ends_at);
+      if (endsAt <= now && product.status === "active") {
+        try {
+          const result = await ProductService.endAuction(product.id);
+          results.push(result);
+        } catch (error) {
+          console.error(
+            `Failed to end auction for product ${product.id}:`,
+            error
+          );
+        }
+      }
+    }
+
+    return results;
+  },
 };

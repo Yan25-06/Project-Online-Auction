@@ -16,6 +16,8 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import UserPage from "./pages/UserPage";
 import ProductListingPage from "./pages/ProductListPage";
 import PostProductPage from "./pages/PostProductPage";
+import OrderCompletionPage from "./pages/OrderCompletionPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUpgradeRequests from "./pages/admin/AdminUpgradeRequests";
@@ -36,6 +38,12 @@ const router = createBrowserRouter(
         <Route path="/products" element={<HomePage />} />
         <Route path="/post-product" element={<PostProductPage />} />
         <Route path="/products/:id" element={<DetailsPage />} />
+        <Route path="/my-orders" element={<MyOrdersPage />} />
+        <Route path="/orders/:orderId" element={<OrderCompletionPage />} />
+        <Route
+          path="/products/:productId/order"
+          element={<OrderCompletionPage />}
+        />
         <Route
           path="/categories/:categoryId"
           element={<ProductListingPage />}

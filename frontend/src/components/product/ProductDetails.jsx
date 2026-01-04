@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   Clock,
@@ -14,6 +14,7 @@ import {
   Heart,
   AlertCircle,
   Home,
+  ArrowRight,
 } from "lucide-react";
 // 1. Import thêm maskName
 import {
@@ -26,17 +27,20 @@ import { useWatchList } from "../../context/WatchListContext";
 import SectionTitle from "./SectionTitle";
 import ProductCard from "./ProductCard";
 import ProductDescriptionSection from "./ProductDescriptionSection";
-// 2. Import thêm BidService, UserService
+// 2. Import thêm BidService, UserService, OrderService
 import {
   ProductService,
   QuestionService,
   BidService,
   UserService,
+  OrderService,
 } from "../../services/backendService";
 import BidBox from "./BidBox";
+import { supabase } from "../../config/supabase";
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -46,12 +50,25 @@ const ProductDetails = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState("Chưa có");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [order, setOrder] = useState(null);
 
   // States for appended description
   const [appendedDescriptions, setAppendedDescriptions] = useState([]);
 
   const { watchList, toggleWatchList } = useWatchList();
   const isFavorite = product ? watchList.includes(product.id) : false;
+
+  // Get current user
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getCurrentUser();
+  }, []);
 
   // --- FETCH PRODUCT & QUESTIONS ---
   useEffect(() => {
@@ -91,6 +108,39 @@ const ProductDetails = () => {
               timestamp: desc.created_at || new Date().toISOString(),
             }));
           setAppendedDescriptions(appended);
+        }
+
+        // Check if product has ended and load order if exists
+        if (data.status === "ended" || data.status === "sold") {
+          try {
+            const orderData = await OrderService.getByProduct(id);
+            setOrder(orderData);
+          } catch (err) {
+            console.log("No order found for this product");
+          }
+        }
+
+        // Check if auction time has expired but status is still active
+        const now = new Date();
+        const endsAt = new Date(data.ends_at);
+        if (data.status === "active" && endsAt <= now) {
+          try {
+            // Auction has expired, end it and create order
+            console.log("Auction has expired, ending it...");
+            const endResult = await ProductService.endAuction(id);
+            console.log("Auction ended:", endResult);
+
+            // Reload product data to get updated status
+            const updatedData = await ProductService.getById(id);
+            setProduct(updatedData);
+
+            // Load order if created
+            if (endResult.order) {
+              setOrder(endResult.order);
+            }
+          } catch (endErr) {
+            console.error("Error ending auction:", endErr);
+          }
         }
       } catch (err) {
         console.error("Lỗi:", err);
@@ -206,10 +256,64 @@ const ProductDetails = () => {
       </div>
     );
 
+  // Check if product has ended and show notice for non-participants
+  const isProductEnded =
+    product.status === "ended" || product.status === "sold";
+  const isSeller = currentUser && currentUser.id === product.seller_id;
+  const isWinner = order && currentUser && currentUser.id === order.winner_id;
+  const showEndedNotice = isProductEnded && !isSeller && !isWinner;
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fadeIn bg-white min-h-screen">
+      {/* Show order completion notice for seller/winner */}
+      {isProductEnded && (isSeller || isWinner) && order && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 rounded-lg">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="text-blue-600" size={24} />
+              <div>
+                <h3 className="text-lg font-bold text-blue-800">
+                  Phiên đấu giá đã kết thúc
+                </h3>
+                <p className="text-blue-700 mt-1">
+                  {isSeller
+                    ? "Sản phẩm của bạn đã được bán. Vui lòng hoàn tất đơn hàng."
+                    : "Bạn đã thắng phiên đấu giá này. Vui lòng hoàn tất đơn hàng."}
+                </p>
+              </div>
+            </div>
+            <Link
+              to={`/orders/${order.id}`}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap flex items-center gap-2"
+            >
+              Hoàn tất đơn hàng
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Show ended notice for non-participants */}
+      {showEndedNotice && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6 rounded-lg">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="text-yellow-600" size={24} />
+            <div>
+              <h3 className="text-lg font-bold text-yellow-800">
+                Sản phẩm đã kết thúc
+              </h3>
+              <p className="text-yellow-700 mt-1">
+                Phiên đấu giá cho sản phẩm này đã kết thúc. Bạn có thể xem thông
+                tin sản phẩm nhưng không thể đấu giá.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        {" "}
         <Link to="/" className="flex items-center hover:text-blue-600">
           <Home size={16} className="mr-1" />
           Trang chủ
