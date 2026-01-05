@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Mail, Lock, ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "../components/common/Toast";
 import { AuthService } from "../services/authService";
 import { validateForgotPasswordEmail, validateOtp, validateResetPassword } from "../utils/validators";
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [step, setStep] = useState(1); // 1: email, 2: OTP, 3: new password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");

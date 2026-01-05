@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../common/Toast';
 import { QuestionService } from '../../services/backendService';
 
 const UnansweredQuestions = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [answerText, setAnswerText] = useState({});
@@ -29,18 +31,18 @@ const UnansweredQuestions = () => {
   const handleAnswer = async (questionId) => {
     const answer = answerText[questionId];
     if (!answer || answer.trim() === '') {
-      alert('Vui lòng nhập câu trả lời');
+      toast.show('Vui lòng nhập câu trả lời', { type: 'error' });
       return;
     }
 
     try {
-      await QuestionService.answer(questionId, { sellerId: user.id, answerText: answer });
-      alert('Đã trả lời câu hỏi!');
+      await QuestionService.answer(questionId, user.id, answer);
+      toast.show('Đã trả lời câu hỏi!', { type: 'success' });
       setAnswerText({ ...answerText, [questionId]: '' });
       fetchQuestions(); // Refresh
     } catch (err) {
       console.error('Error answering question:', err);
-      alert('Không thể trả lời câu hỏi');
+      toast.show('Không thể trả lời câu hỏi', { type: 'error' });
     }
   };
 

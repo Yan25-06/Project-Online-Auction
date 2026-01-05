@@ -4,14 +4,14 @@ import { RatingService } from '../services/rating.service.js';
 export const RatingController = {
   upsert: async (req: Request, res: Response) => {
     try {
-      const { orderId, raterId, ratedUserId, ratingType, comment } = req.body;
-      
+      const { orderId, ratingUserId, ratedUserId, score, feedback } = req.body;
+      console.log('Received rating upsert request:', req.body);
       // Validate ratingType
-      if (!['positive', 'negative'].includes(ratingType)) {
+      if (!['positive', 'negative'].includes(score)) {
         return res.status(400).json({ error: 'ratingType must be positive or negative' });
       }
       
-      const data = await RatingService.upsert(orderId, raterId, ratedUserId, ratingType, comment);
+      const data = await RatingService.upsert(orderId, ratingUserId, ratedUserId, score, feedback);
       return res.status(201).json(data);
     } catch (err: any) {
       return res.status(400).json({ error: err.message });

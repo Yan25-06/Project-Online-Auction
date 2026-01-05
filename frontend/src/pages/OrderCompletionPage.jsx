@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "../components/common/Toast";
 import { OrderService, ProductService } from "../services/backendService";
 import { supabase } from "../config/supabase";
 import "./OrderCompletionPage.css";
@@ -7,6 +8,7 @@ import "./OrderCompletionPage.css";
 const OrderCompletionPage = () => {
   const { orderId, productId } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [order, setOrder] = useState(null);
   const [product, setProduct] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -72,7 +74,7 @@ const OrderCompletionPage = () => {
   const handleStep1Submit = async () => {
     try {
       if (!shippingAddress || !paymentProofUrl) {
-        alert("Vui lòng nhập đầy đủ địa chỉ giao hàng và hoá đơn thanh toán");
+        toast.show("Vui lòng nhập đầy đủ địa chỉ giao hàng và hoá đơn thanh toán", { type: 'error' });
         return;
       }
 
@@ -81,45 +83,45 @@ const OrderCompletionPage = () => {
         shippingAddress,
         paymentProofUrl
       );
-      alert("Đã gửi thông tin thanh toán thành công!");
+      toast.show("Đã gửi thông tin thanh toán thành công!", { type: 'success' });
       loadData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      toast.show("Lỗi: " + err.message, { type: 'error' });
     }
   };
 
   const handleStep2Submit = async () => {
     try {
       if (!shippingProofUrl) {
-        alert("Vui lòng nhập hoá đơn vận chuyển");
+        toast.show("Vui lòng nhập hoá đơn vận chuyển", { type: 'error' });
         return;
       }
 
       await OrderService.confirmPaymentAndShipping(order.id, shippingProofUrl);
-      alert("Đã xác nhận và gửi hoá đơn vận chuyển!");
+      toast.show("Đã xác nhận và gửi hoá đơn vận chuyển!", { type: 'success' });
       loadData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      toast.show("Lỗi: " + err.message, { type: 'error' });
     }
   };
 
   const handleStep3Submit = async () => {
     try {
       await OrderService.confirmDelivery(order.id);
-      alert("Đã xác nhận nhận hàng!");
+      toast.show("Đã xác nhận nhận hàng!", { type: 'success' });
       loadData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      toast.show("Lỗi: " + err.message, { type: 'error' });
     }
   };
 
   const handleRatingSubmit = async () => {
     try {
       await OrderService.submitRating(order.id, rating, feedback);
-      alert("Đã gửi đánh giá thành công!");
+      toast.show("Đã gửi đánh giá thành công!", { type: 'success' });
       loadData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      toast.show("Lỗi: " + err.message, { type: 'error' });
     }
   };
 
@@ -134,10 +136,10 @@ const OrderCompletionPage = () => {
       }
 
       await OrderService.cancelBySeller(order.id, cancelReason);
-      alert("Đã hủy giao dịch và đánh giá người mua!");
+      toast.show("Đã hủy giao dịch và đánh giá người mua!", { type: 'success' });
       loadData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      toast.show("Lỗi: " + err.message, { type: 'error' });
     }
   };
 

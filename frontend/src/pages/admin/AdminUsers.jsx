@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Home, ChevronRight } from "lucide-react";
+import { useToast } from "../../components/common/Toast";
 import { AdminService } from "../../services/adminService";
 
 export default function AdminUsers() {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -24,7 +26,7 @@ export default function AdminUsers() {
       setTotal(data.total || 0);
     } catch (error) {
       console.error("Error loading users:", error);
-      alert("Failed to load users");
+      toast.show("Failed to load users", { type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -35,11 +37,11 @@ export default function AdminUsers() {
 
     try {
       await AdminService.users.delete(userId);
-      alert("User deleted successfully");
+      toast.show("User deleted successfully", { type: 'success' });
       loadUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Failed to delete user");
+      toast.show("Failed to delete user", { type: 'error' });
     }
   };
 

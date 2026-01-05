@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Home, ChevronRight, CheckCircle, XCircle, User, Mail, Calendar, Star } from "lucide-react";
+import { useToast } from "../../components/common/Toast";
 import { AdminService } from "../../services/adminService";
 
 export default function AdminUpgradeRequests() {
+  const toast = useToast();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +20,7 @@ export default function AdminUpgradeRequests() {
       setRequests(data || []);
     } catch (error) {
       console.error("Error loading upgrade requests:", error);
-      alert("Không thể tải danh sách yêu cầu");
+      toast.show("Không thể tải danh sách yêu cầu", { type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -29,11 +31,11 @@ export default function AdminUpgradeRequests() {
 
     try {
       await AdminService.users.approveUpgrade(userId);
-      alert("Đã duyệt yêu cầu nâng cấp thành công!");
+      toast.show("Đã duyệt yêu cầu nâng cấp thành công!", { type: 'success' });
       loadRequests();
-    } catch (error) {
-      console.error("Error approving upgrade:", error);
-      alert("Duyệt yêu cầu thất bại");
+    } catch (err) {
+      console.error("Error approving:", err);
+      toast.show("Duyệt yêu cầu thất bại", { type: 'error' });
     }
   };
 
@@ -42,11 +44,11 @@ export default function AdminUpgradeRequests() {
 
     try {
       await AdminService.users.rejectUpgrade(userId);
-      alert("Đã từ chối yêu cầu nâng cấp");
+      toast.show("Đã từ chối yêu cầu nâng cấp", { type: 'success' });
       loadRequests();
-    } catch (error) {
-      console.error("Error rejecting upgrade:", error);
-      alert("Từ chối yêu cầu thất bại");
+    } catch (err) {
+      console.error("Error rejecting:", err);
+      toast.show("Từ chối yêu cầu thất bại", { type: 'error' });
     }
   };
 

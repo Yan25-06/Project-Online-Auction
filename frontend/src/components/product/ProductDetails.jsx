@@ -27,6 +27,7 @@ import {
 } from "../../utils/formatters";
 import { useWatchList } from "../../context/WatchListContext";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../common/Toast";
 import SectionTitle from "./SectionTitle";
 import ProductCard from "./ProductCard";
 import ProductDescriptionSection from "./ProductDescriptionSection";
@@ -74,6 +75,7 @@ const ProductDetails = () => {
 
   const { watchList, toggleWatchList } = useWatchList();
   const isFavorite = product ? watchList.includes(product.id) : false;
+  const toast = useToast();
 
   // Get current user
   useEffect(() => {
@@ -230,7 +232,7 @@ const ProductDetails = () => {
   const handleAskQuestion = async () => {
     if (!newQuestion.trim()) return;
     if (!user) {
-      alert("Bạn cần đăng nhập để đặt câu hỏi");
+      toast.show("Bạn cần đăng nhập để đặt câu hỏi", { type: 'error' });
       return;
     }
     
@@ -248,7 +250,7 @@ const ProductDetails = () => {
       setNewQuestion("");
     } catch (err) {
       console.error("Lỗi đặt câu hỏi:", err);
-      alert("Đặt câu hỏi thất bại. Vui lòng thử lại.");
+      toast.show("Đặt câu hỏi thất bại. Vui lòng thử lại.", { type: 'error' });
     } finally {
       setAskingQuestion(false);
     }
@@ -267,7 +269,7 @@ const ProductDetails = () => {
       setAnswerText("");
     } catch (err) {
       console.error("Lỗi trả lời:", err);
-      alert("Trả lời thất bại. Vui lòng thử lại.");
+      toast.show("Trả lời thất bại. Vui lòng thử lại.", { type: 'error' });
     }
   };
 

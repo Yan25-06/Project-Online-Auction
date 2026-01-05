@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../common/Toast';
 import { BidService, RatingService, OrderService } from '../../services/backendService';
 
 const WonProducts = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(false);
   const [ratingStates, setRatingStates] = useState({});
@@ -59,14 +61,14 @@ const WonProducts = () => {
   const submitRating = async (bid) => {
     const state = ratingStates[bid.id] || {};
     if (!state.score) {
-      alert('Vui lòng chọn đánh giá (Hài lòng hoặc Không hài lòng)');
+      toast.show('Vui lòng chọn đánh giá (Hài lòng hoặc Không hài lòng)', { type: 'error' });
       return;
     }
 
     try {
       const order = orders[bid.product.id];
       if (!order) {
-        alert('Không tìm thấy đơn hàng cho sản phẩm này');
+        toast.show('Không tìm thấy đơn hàng cho sản phẩm này', { type: 'error' });
         return;
       }
 
@@ -74,7 +76,7 @@ const WonProducts = () => {
       const sellerId = bid.product.seller?.id || bid.product.seller_id;
       
       if (!sellerId) {
-        alert('Không tìm thấy thông tin người bán');
+        toast.show('Không tìm thấy thông tin người bán', { type: 'error' });
         return;
       }
 
@@ -87,7 +89,7 @@ const WonProducts = () => {
         feedback: state.feedback || ''
       });
       
-      alert('Đánh giá đã được gửi thành công!');
+      toast.show('Đánh giá đã được gửi thành công!', { type: 'success' });
       // Clear rating state for this bid
       setRatingStates(prev => {
         const newState = { ...prev };
@@ -96,7 +98,7 @@ const WonProducts = () => {
       });
     } catch (err) {
       console.error('Rating error:', err);
-      alert('Lỗi khi gửi đánh giá: ' + (err.response?.data?.error || err.message));
+      toast.show('Lỗi khi gửi đánh giá: ' + (err.response?.data?.error || err.message), { type: 'error' });
     }
   };
 
