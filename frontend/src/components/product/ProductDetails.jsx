@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
+  ChevronLeft,
   Clock,
   ShieldCheck,
   Phone,
@@ -57,6 +58,10 @@ const ProductDetails = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [order, setOrder] = useState(null);
   const [topBidderRating, setTopBidderRating] = useState(null); // Rating info của bidder cao nhất
+  
+  // Slideshow states
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
   
   // States cho phần hỏi đáp
   const [newQuestion, setNewQuestion] = useState("");
@@ -318,6 +323,39 @@ const ProductDetails = () => {
     if (allImages.length > 0) setActiveImage(allImages[0]);
   }, [allImages]);
 
+  // Auto-play slideshow
+  useEffect(() => {
+    if (!isAutoPlay || allImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    }, 3000); // Chuyển ảnh mỗi 3 giây
+
+    return () => clearInterval(interval);
+  }, [isAutoPlay, allImages.length]);
+
+  // Update active image when index changes
+  useEffect(() => {
+    if (allImages[currentImageIndex]) {
+      setActiveImage(allImages[currentImageIndex]);
+    }
+  }, [currentImageIndex, allImages]);
+
+  // Navigation functions
+  const goToPrevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? allImages.length - 1 : prev - 1
+    );
+  };
+
+  const goToNextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const goToImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
   // --- RENDER ---
   if (loading)
     return (
@@ -435,6 +473,8 @@ const ProductDetails = () => {
               alt={product.name}
               className="w-full h-full object-cover"
             />
+            
+            {/* Favorite button */}
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -452,19 +492,67 @@ const ProductDetails = () => {
                 }`}
               />
             </button>
+
+            {/* Image counter */}
             <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm flex items-center gap-1">
-              <ImageIcon size={12} /> {allImages.length} ảnh
+              <ImageIcon size={12} /> {currentImageIndex + 1}/{allImages.length}
             </div>
+
+            {/* Previous/Next buttons - only show if more than 1 image */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={goToPrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={goToNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Next image"
+                >
+                  <ChevronRight size={24} />
+                </button>
+
+                {/* Dots indicator */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {allImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToImage(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentImageIndex
+                          ? "bg-white w-6"
+                          : "bg-white/50 hover:bg-white/75"
+                      }`}
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Auto-play toggle */}
+                <button
+                  onClick={() => setIsAutoPlay(!isAutoPlay)}
+                  className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded bg-black/50 hover:bg-black/70 text-white text-xs transition-all opacity-0 group-hover:opacity-100"
+                >
+                  {isAutoPlay ? "⏸ Pause" : "▶ Play"}
+                </button>
+              </>
+            )}
           </div>
+
+          {/* Thumbnails */}
           {allImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {allImages.map((img, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveImage(img)}
-                  className={`relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border-2 ${
-                    activeImage === img
-                      ? "border-blue-600"
+                  onClick={() => goToImage(idx)}
+                  className={`relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                    currentImageIndex === idx
+                      ? "border-blue-600 scale-105"
                       : "border-transparent hover:border-blue-300"
                   }`}
                 >
@@ -473,6 +561,10 @@ const ProductDetails = () => {
                     alt={`Thumb ${idx}`}
                     className="w-full h-full object-cover"
                   />
+                  {/* Active indicator */}
+                  {currentImageIndex === idx && (
+                    <div className="absolute inset-0 bg-blue-600/20"></div>
+                  )}
                 </button>
               ))}
             </div>
