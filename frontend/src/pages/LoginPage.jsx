@@ -12,6 +12,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { AuthService } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import { validateLoginForm } from "../utils/validators";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -20,11 +21,21 @@ const LoginPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setFieldErrors({});
+
+    // Custom validation
+    const validation = validateLoginForm(formData);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       // 3. Gọi hàm đăng nhập từ Service (AuthService.login(email, password))
@@ -91,16 +102,23 @@ const LoginPage = () => {
                 <input
                   id="email"
                   name="email"
-                  type="email"
-                  required
-                  className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  type="text"
+                  className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
+                    fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="vidu@example.com"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
+                  }}
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.email}
+                </p>
+              )}
             </div>
 
             {/* Password Input */}
@@ -119,13 +137,15 @@ const LoginPage = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  required
-                  className="appearance-none rounded-lg relative block w-full pl-10 pr-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
+                    fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
+                  }}
                 />
                 <div
                   className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
@@ -138,6 +158,11 @@ const LoginPage = () => {
                   )}
                 </div>
               </div>
+              {fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.password}
+                </p>
+              )}
             </div>
           </div>
 

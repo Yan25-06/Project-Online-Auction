@@ -10,12 +10,14 @@ import { useToast } from '../components/common/Toast';
 import { Editor } from '@tinymce/tinymce-react';
 import Header from '../components/common/Header';
 import { useAuth } from '../context/AuthContext';
+import { validateProductForm } from '../utils/validators';
 
 const PostProductPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const toast = useToast();
   const { user } = useAuth();
   // State quản lý form
@@ -78,6 +80,10 @@ const PostProductPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear field error when user types
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   // Xử lý chọn ảnh chính
@@ -86,6 +92,9 @@ const PostProductPage = () => {
     if (file) {
       setMainImage(file);
       setMainImagePreview(URL.createObjectURL(file));
+      if (fieldErrors.mainImage) {
+        setFieldErrors(prev => ({ ...prev, mainImage: '' }));
+      }
     }
   };
 
@@ -104,6 +113,9 @@ const PostProductPage = () => {
 
     setAdditionalImages(prev => [...prev, ...selectedFiles]);
     setAdditionalPreviews(prev => [...prev, ...newPreviews]);
+    if (fieldErrors.additionalImages) {
+      setFieldErrors(prev => ({ ...prev, additionalImages: '' }));
+    }
   };
 
   // Xóa ảnh phụ
@@ -116,24 +128,15 @@ const PostProductPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
 
-    // 1. Validation: Ít nhất 1 ảnh chính và 3 ảnh phụ
-    if (!mainImage) {
-      setError('Vui lòng tải lên ảnh chính cho sản phẩm.');
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    if (additionalImages.length < 3) {
-      setError('Vui lòng tải lên ít nhất 3 ảnh phụ cho sản phẩm.');
-      window.scrollTo(0, 0);
-      return;
-    }
-    
-    // 2. Validation: Thời gian kết thúc
-    const endTime = new Date(formData.endsAt);
-    if (endTime <= new Date()) {
-      setError('Thời gian kết thúc phải lớn hơn thời gian hiện tại.');
+    // Custom validation
+    const validation = validateProductForm(formData, mainImage, additionalImages);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      // Show first error at top
+      const firstError = Object.values(validation.errors)[0];
+      setError(firstError);
       window.scrollTo(0, 0);
       return;
     }
@@ -231,7 +234,7 @@ const PostProductPage = () => {
               </h1>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6" noValidate>
               
               {/* Upload Images */}
               <div>
@@ -240,7 +243,9 @@ const PostProductPage = () => {
                 {/* Ảnh chính */}
                 <div className="mb-4">
                   <label className="block text-xs font-medium text-gray-600 mb-2">Ảnh chính (bìa sản phẩm)</label>
-                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center hover:bg-blue-50 transition-colors">
+                  <div className={`border-2 border-dashed rounded-lg p-4 text-center hover:bg-blue-50 transition-colors ${
+                    fieldErrors.mainImage ? 'border-red-400 bg-red-50' : 'border-blue-300'
+                  }`}>
                     <input type="file" onChange={handleMainImageChange} className="hidden" id="main-image-upload" accept="image/*" />
                     <label htmlFor="main-image-upload" className="cursor-pointer flex flex-col items-center justify-center">
                         <div className="bg-blue-100 p-3 rounded-full mb-2">
@@ -250,6 +255,11 @@ const PostProductPage = () => {
                         <span className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP (Tối đa 5MB)</span>
                     </label>
                   </div>
+                  {fieldErrors.mainImage && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle size={14} /> {fieldErrors.mainImage}
+                    </p>
+                  )}
                   {mainImagePreview && (
                     <div className="mt-3 relative w-40 aspect-square rounded-lg overflow-hidden border-2 border-blue-500">
                       <img src={mainImagePreview} alt="preview" className="w-full h-full object-cover" />
@@ -261,7 +271,9 @@ const PostProductPage = () => {
                 {/* Ảnh phụ */}
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-2">Ảnh phụ (3-5 ảnh) <span className="text-red-500">*</span></label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                  <div className={`border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 transition-colors ${
+                    fieldErrors.additionalImages ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}>
                     <input type="file" multiple onChange={handleAdditionalImagesChange} className="hidden" id="additional-images-upload" accept="image/*" />
                     <label htmlFor="additional-images-upload" className="cursor-pointer flex flex-col items-center justify-center">
                         <div className="bg-gray-100 p-3 rounded-full mb-2">
@@ -271,6 +283,11 @@ const PostProductPage = () => {
                         <span className="text-xs text-gray-500 mt-1">Chọn nhiều ảnh cùng lúc (3-5 ảnh)</span>
                     </label>
                   </div>
+                  {fieldErrors.additionalImages && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle size={14} /> {fieldErrors.additionalImages}
+                    </p>
+                  )}
                   
                   {/* Image Previews */}
                   {additionalPreviews.length > 0 && (
@@ -297,44 +314,86 @@ const PostProductPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tên sản phẩm <span className="text-red-500">*</span></label>
-                    <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full rounded-lg border-gray-300 border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-gray-300 transition-all" placeholder="Ví dụ: iPhone 15 Pro Max 256GB..." />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-gray-300 transition-all ${
+                      fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`} placeholder="Ví dụ: iPhone 15 Pro Max 256GB..." />
+                    {fieldErrors.name && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.name}
+                      </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
-                    <select required name="categoryId" value={formData.categoryId} onChange={handleChange} className="w-full rounded-lg border-gray-300 border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                    <select name="categoryId" value={formData.categoryId} onChange={handleChange} className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white ${
+                      fieldErrors.categoryId ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}>
                       <option value="">-- Chọn danh mục --</option>
                       {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                     </select>
+                    {fieldErrors.categoryId && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.categoryId}
+                      </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc <span className="text-red-500">*</span></label>
-                    <input required type="datetime-local" name="endsAt" value={formData.endsAt} onChange={handleChange} className="w-full rounded-lg border-gray-300 border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-600" />
+                    <input type="datetime-local" name="endsAt" value={formData.endsAt} onChange={handleChange} className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-600 ${
+                      fieldErrors.endsAt ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`} />
+                    {fieldErrors.endsAt && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.endsAt}
+                      </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Giá khởi điểm (VNĐ) <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><DollarSign size={16}/></div>
-                      <input required type="number" name="startingPrice" value={formData.startingPrice} onChange={handleChange} className="w-full rounded-lg border-gray-300 border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" min="0" />
+                      <input type="text" name="startingPrice" value={formData.startingPrice} onChange={handleChange} className={`w-full rounded-lg border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        fieldErrors.startingPrice ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`} placeholder="0" />
                     </div>
+                    {fieldErrors.startingPrice && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.startingPrice}
+                      </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Bước giá (VNĐ) <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Tag size={16}/></div>
-                      <input required type="number" name="stepPrice" value={formData.stepPrice} onChange={handleChange} className="w-full rounded-lg border-gray-300 border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ví dụ: 50000" min="0"/>
+                      <input type="text" name="stepPrice" value={formData.stepPrice} onChange={handleChange} className={`w-full rounded-lg border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        fieldErrors.stepPrice ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`} placeholder="Ví dụ: 50000" />
                     </div>
+                    {fieldErrors.stepPrice && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.stepPrice}
+                      </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Giá mua ngay (Tùy chọn)</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Tag size={16}/></div>
-                      <input type="number" name="buyNowPrice" value={formData.buyNowPrice} onChange={handleChange} className="w-full rounded-lg border-gray-300 border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Để trống nếu đấu giá thuần túy" min="0"/>
+                      <input type="text" name="buyNowPrice" value={formData.buyNowPrice} onChange={handleChange} className={`w-full rounded-lg border pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        fieldErrors.buyNowPrice ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`} placeholder="Để trống nếu đấu giá thuần túy" />
                     </div>
+                    {fieldErrors.buyNowPrice && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle size={14} /> {fieldErrors.buyNowPrice}
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -356,7 +415,7 @@ const PostProductPage = () => {
               {/* Description (TinyMCE Editor) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mô tả chi tiết <span className="text-red-500">*</span>
+                    Mô tả chi tiết
                 </label>
                 <div className="rounded-lg overflow-hidden border border-gray-300">
                     <Editor

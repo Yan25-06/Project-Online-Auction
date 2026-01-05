@@ -7,7 +7,12 @@ export const AuthService = {
       email,
       password,
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message === "Invalid login credentials") {
+        throw new Error("Sai email hoặc mật khẩu");
+      }
+      throw error;
+    }
     localStorage.setItem("token", data.session.access_token);
     return data.user;
   },

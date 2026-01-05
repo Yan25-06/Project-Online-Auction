@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Mail, Lock, ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthService } from "../services/authService";
+import { validateForgotPasswordEmail, validateOtp, validateResetPassword } from "../utils/validators";
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -12,10 +13,19 @@ const ForgotPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
+
+    // Custom validation
+    const validation = validateForgotPasswordEmail(email);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -31,6 +41,14 @@ const ForgotPasswordPage = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
+
+    // Custom validation
+    const validation = validateOtp(otp);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -50,14 +68,12 @@ const ForgotPasswordPage = () => {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
 
-    if (newPassword !== confirmPassword) {
-      setError("Mật khẩu nhập lại không khớp.");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+    // Custom validation
+    const validation = validateResetPassword(newPassword, confirmPassword);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
       return;
     }
 
@@ -110,7 +126,7 @@ const ForgotPasswordPage = () => {
 
         {/* Step 1: Email Input */}
         {step === 1 && (
-          <form className="mt-8 space-y-6" onSubmit={handleSendOtp}>
+          <form className="mt-8 space-y-6" onSubmit={handleSendOtp} noValidate>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -120,14 +136,23 @@ const ForgotPasswordPage = () => {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="email"
-                  required
-                  className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  type="text"
+                  className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="email@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
+                  }}
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.email}
+                </p>
+              )}
             </div>
 
             <div>
@@ -154,20 +179,28 @@ const ForgotPasswordPage = () => {
 
         {/* Step 2: OTP Verification */}
         {step === 2 && (
-          <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp}>
+          <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp} noValidate>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mã OTP
               </label>
               <input
                 type="text"
-                required
-                maxLength="6"
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 text-center text-2xl tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className={`appearance-none rounded-lg relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 text-center text-2xl tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  fieldErrors.otp ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="000000"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  if (fieldErrors.otp) setFieldErrors({ ...fieldErrors, otp: '' });
+                }}
               />
+              {fieldErrors.otp && (
+                <p className="mt-1 text-sm text-red-600 flex items-center justify-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.otp}
+                </p>
+              )}
             </div>
 
             <div>
@@ -194,7 +227,7 @@ const ForgotPasswordPage = () => {
 
         {/* Step 3: New Password */}
         {step === 3 && (
-          <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
+          <form className="mt-8 space-y-6" onSubmit={handleResetPassword} noValidate>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mật khẩu mới
@@ -205,13 +238,22 @@ const ForgotPasswordPage = () => {
                 </div>
                 <input
                   type="password"
-                  required
-                  className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    fieldErrors.newPassword ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="******"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (fieldErrors.newPassword) setFieldErrors({ ...fieldErrors, newPassword: '' });
+                  }}
                 />
               </div>
+              {fieldErrors.newPassword && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.newPassword}
+                </p>
+              )}
             </div>
 
             <div>
@@ -224,13 +266,22 @@ const ForgotPasswordPage = () => {
                 </div>
                 <input
                   type="password"
-                  required
-                  className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="******"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (fieldErrors.confirmPassword) setFieldErrors({ ...fieldErrors, confirmPassword: '' });
+                  }}
                 />
               </div>
+              {fieldErrors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.confirmPassword}
+                </p>
+              )}
             </div>
 
             <div>

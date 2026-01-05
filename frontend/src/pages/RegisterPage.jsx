@@ -6,12 +6,14 @@ import {
   UserPlus,
   RefreshCw,
   ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthService } from "../services/authService";
 import { useToast } from "../components/common/Toast";
 import ReCAPTCHA from "react-google-recaptcha";
+import { validateRegisterForm, validateOtp } from "../utils/validators";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ const RegisterPage = () => {
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const toast = useToast();
   const recaptchaRef = useRef();
 
@@ -37,21 +40,24 @@ const RegisterPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    // Clear field error when user types
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu nhập lại không khớp.");
+    // Custom validation
+    const validation = validateRegisterForm(formData);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
       return;
     }
-    if (formData.password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự.");
-      return;
-    }
+
     // Only check reCAPTCHA if site key is configured
     const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     if (recaptchaSiteKey && !formData.recaptcha) {
@@ -73,6 +79,16 @@ const RegisterPage = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    setError("");
+    setFieldErrors({});
+
+    // Validate OTP
+    const validation = validateOtp(otp);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -139,7 +155,7 @@ const RegisterPage = () => {
         )}
 
         {step === 1 ? (
-          <form className="mt-8 space-y-6" onSubmit={handleRegister}>
+          <form className="mt-8 space-y-6" onSubmit={handleRegister} noValidate>
             <div className="rounded-md shadow-sm -space-y-px">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -152,13 +168,19 @@ const RegisterPage = () => {
                   <input
                     name="full_name"
                     type="text"
-                    required
-                    className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                      fieldErrors.full_name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="Nguyễn Văn A"
                     value={formData.full_name}
                     onChange={handleInputChange}
                   />
                 </div>
+                {fieldErrors.full_name && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle size={14} /> {fieldErrors.full_name}
+                  </p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -171,14 +193,20 @@ const RegisterPage = () => {
                   </div>
                   <input
                     name="email"
-                    type="email"
-                    required
-                    className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    type="text"
+                    className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                      fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="email@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle size={14} /> {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -192,13 +220,19 @@ const RegisterPage = () => {
                   <input
                     name="address"
                     type="text"
-                    required
-                    className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                      fieldErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="Số nhà, đường, quận/huyện..."
                     value={formData.address}
                     onChange={handleInputChange}
                   />
                 </div>
+                {fieldErrors.address && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle size={14} /> {fieldErrors.address}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -213,13 +247,19 @@ const RegisterPage = () => {
                     <input
                       name="password"
                       type="password"
-                      required
-                      className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                        fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                       placeholder="******"
                       value={formData.password}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {fieldErrors.password && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle size={14} /> {fieldErrors.password}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -232,13 +272,19 @@ const RegisterPage = () => {
                     <input
                       name="confirmPassword"
                       type="password"
-                      required
-                      className="appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={`appearance-none rounded-lg relative block w-full pl-10 px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                        fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                       placeholder="******"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {fieldErrors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle size={14} /> {fieldErrors.confirmPassword}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -281,7 +327,7 @@ const RegisterPage = () => {
             </div>
           </form>
         ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp}>
+          <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp} noValidate>
             <div className="rounded-md shadow-sm">
               <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
                 Nhập mã OTP (6 số)
@@ -289,13 +335,21 @@ const RegisterPage = () => {
               <input
                 name="otp"
                 type="text"
-                required
-                maxLength={6}
-                className="appearance-none rounded-lg relative block w-2/3 mx-auto px-3 py-3 border border-gray-300 placeholder-gray-300 text-gray-900 text-center text-2xl tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className={`appearance-none rounded-lg relative block w-2/3 mx-auto px-3 py-3 border placeholder-gray-300 text-gray-900 text-center text-2xl tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  fieldErrors.otp ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="000000"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
+                onChange={(e) => {
+                  setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6));
+                  if (fieldErrors.otp) setFieldErrors({ ...fieldErrors, otp: '' });
+                }}
               />
+              {fieldErrors.otp && (
+                <p className="mt-2 text-sm text-red-600 flex items-center justify-center gap-1">
+                  <AlertCircle size={14} /> {fieldErrors.otp}
+                </p>
+              )}
             </div>
 
             <button
