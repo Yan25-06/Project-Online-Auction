@@ -311,8 +311,9 @@ export interface CreateBidInput {
   product_id: string;
   bidder_id: string;
   bid_amount: number;
-  max_bid_amount?: number;
-  is_auto_bid?: boolean;
+  max_bid_amount: number;
+  is_auto_bid: boolean;
+  is_rejected?: boolean;
 }
 
 // ==================== API Response Types ====================
