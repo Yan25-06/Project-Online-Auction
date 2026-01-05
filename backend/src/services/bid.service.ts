@@ -2,6 +2,7 @@ import { bidModel } from '../models/bid.model.js';
 import { productModel } from '../models/product.model.js';
 import { userModel } from '../models/user.model.js';
 import { EmailService } from './email.service.js';
+import { maskName } from '../helper/maskName.js';
 
 export const BidService = {
   create: async (bidData: any) => {
@@ -171,11 +172,7 @@ export const BidService = {
 
       return {
         ...bid,
-        bidder_name: fullName
-          ? isSeller
-            ? fullName
-            : `****${fullName.slice(-4)}`
-          : '****'
+        bidder_name: isSeller ? (fullName || 'Ẩn danh') : maskName(fullName || '')
       };
     });
   },

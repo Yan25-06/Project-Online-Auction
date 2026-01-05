@@ -3,7 +3,7 @@ import { UserController } from "../controllers/user.controller.js";
 
 const userRouter = Router();
 
-import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
+import { requireAuth, requireRole, optionalAuth } from "../middlewares/auth.middleware.js";
 
 // Routes without parameters should come first
 userRouter.get("/", UserController.findAll);
@@ -18,7 +18,7 @@ userRouter.get(
 );
 
 // Routes with :id parameter should come last
-userRouter.get("/:id", UserController.getById);
+userRouter.get("/:id", optionalAuth, UserController.getById);
 userRouter.put("/:id", requireAuth, UserController.update);
 userRouter.delete(
   "/:id",

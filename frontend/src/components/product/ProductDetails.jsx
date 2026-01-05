@@ -56,6 +56,7 @@ const ProductDetails = () => {
   const [additionalImages, setAdditionalImages] = useState([]);
   // 3. Thêm state lưu tên người thắng
   const [topBidderName, setTopBidderName] = useState("Chưa có");
+  const [topBidderId, setTopBidderId] = useState(null); // ID của top bidder
   const [currentUser, setCurrentUser] = useState(null);
   const [order, setOrder] = useState(null);
   const [topBidderRating, setTopBidderRating] = useState(null); // Rating info của bidder cao nhất
@@ -193,6 +194,7 @@ const ProductDetails = () => {
 
       if (!product.bid_count || product.bid_count === 0) {
         setTopBidderName("Chưa có");
+        setTopBidderId(null);
         setTopBidderRating(null);
         return;
       }
@@ -201,10 +203,11 @@ const ProductDetails = () => {
         const hb = await BidService.getHighestBid(product.id);
         // Kiểm tra kỹ cấu trúc trả về
         if (hb && hb.bidder_id) {
-          const user = await UserService.getById(hb.bidder_id);
+          const user = await UserService.getById(hb.bidder_id, product.id);
           console.log("Lấy được bidder:", user);
           const name = user.full_name || "Người dùng";
           setTopBidderName(name);
+          setTopBidderId(hb.bidder_id); // Lưu ID
           // Lưu rating info
           setTopBidderRating({
             rating_score: user.rating_score || 0,
@@ -215,6 +218,7 @@ const ProductDetails = () => {
       } catch (error) {
         console.error("Lỗi lấy bidder:", error);
         setTopBidderName("Ẩn danh");
+        setTopBidderId(null);
         setTopBidderRating(null);
       }
     };
@@ -642,9 +646,18 @@ const ProductDetails = () => {
                   <p className="text-xs text-gray-500">Người đặt cao nhất</p>
 
                   {/* 5. Cập nhật hiển thị dùng state topBidderName */}
-                  <p className="font-bold text-sm text-gray-800">
-                    {topBidderName}
-                  </p>
+                  {isSeller && topBidderId ? (
+                    <Link 
+                      to={`/user/${topBidderId}`} 
+                      className="font-bold text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      {topBidderName}
+                    </Link>
+                  ) : (
+                    <p className="font-bold text-sm text-gray-800">
+                      {topBidderName}
+                    </p>
+                  )}
 
                   <div className="flex items-center gap-1 text-xs">
                     {topBidderRating ? (

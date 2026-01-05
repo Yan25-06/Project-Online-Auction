@@ -35,7 +35,10 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) return next();
 
-    (req as any).user = { id: data.user.id };
+    const user = await UserService.findById(data.user.id);
+    if (!user) return next();
+
+    (req as any).user = user;
     return next();
   } catch (err) {
     return next();

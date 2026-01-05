@@ -415,8 +415,9 @@ export const UserService = {
     return response.data;
   },
 
-  getById: async (id) => {
-    const response = await apiClient.get(`/users/${id}`);
+  getById: async (id, productId = null) => {
+    const params = productId ? { productId } : {};
+    const response = await apiClient.get(`/users/${id}`, { params });
     return response.data;
   },
 

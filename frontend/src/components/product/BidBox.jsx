@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { formatCurrency, formatPostDate, maskName } from '../../utils/formatters';
 import { BidService, ProductService, UserService, BlockedBidderService } from '../../services/backendService';
@@ -121,8 +122,8 @@ const BidBox = ({ product, onTopBidderChange }) => {
       setBidAmount('');
 
       if (res && res.bidder_id) {
-        const bidder = await UserService.getById(res.bidder_id);
-        if (onTopBidderChange) onTopBidderChange(maskName(bidder.full_name || ''));
+        const bidder = await UserService.getById(res.bidder_id, product.id);
+        if (onTopBidderChange) onTopBidderChange(bidder.full_name || '');
       }
 
     } catch (err) {
@@ -164,8 +165,8 @@ const BidBox = ({ product, onTopBidderChange }) => {
           const secondHighest = remainingBids[0];
           await ProductService.updatePrice(product.id, secondHighest.bid_amount);
           setHighestBid(secondHighest);
-          const bidder = await UserService.getById(secondHighest.bidder_id);
-          if (onTopBidderChange) onTopBidderChange(maskName(bidder.full_name || ''));
+          const bidder = await UserService.getById(secondHighest.bidder_id, product.id);
+          if (onTopBidderChange) onTopBidderChange(bidder.full_name || '');
         } else {
           // No more bids, reset to starting price
           const startingPrice = product.starting_price || product.current_price;
@@ -251,7 +252,16 @@ const BidBox = ({ product, onTopBidderChange }) => {
                   >
                     <td className="px-3 py-2 text-gray-600">{formatPostDate(item.created_at)}</td>
                     <td className="px-3 py-2 text-gray-700">
-                      {item.bidder_name}
+                      {isOwner && item.bidder_id ? (
+                        <Link 
+                          to={`/user/${item.bidder_id}`}
+                          className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                        >
+                          {item.bidder_name}
+                        </Link>
+                      ) : (
+                        <span>{item.bidder_name}</span>
+                      )}
                       {item.is_rejected && <span className="ml-2 text-xs text-red-600 font-semibold">[Từ chối]</span>}
                     </td>
                     <td className="px-3 py-2 text-right font-bold text-red-600">{formatCurrency(item.bid_amount)}</td>

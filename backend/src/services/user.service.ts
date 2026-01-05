@@ -1,32 +1,34 @@
 import { userModel } from "../models/user.model.js";
-
-// Helper function to mask name: "Nguyễn Văn Khoa" -> "****Khoa"
-const maskName = (name: string): string => {
-  if (!name) return "****";
-  
-  const str = name.trim();
-  const parts = str.split(" ");
-  
-  // Lấy phần cuối cùng của tên (tên gọi)
-  const lastName = parts[parts.length - 1];
-  
-  return `****${lastName}`;
-};
+import { productModel } from "../models/product.model.js";
+import { maskName } from "../helper/maskName.js";
 
 export const UserService = {
-  findById: async (id: string, currentUserId?: string) => {
+  findById: async (id: string, currentUserId?: string, productId?: string) => {
     const user = await userModel.findById(id);
     if (!user) return null;
     
-    const shouldMask = currentUserId !== id;
-    if (shouldMask) {
-      return {
-        ...user,
-        full_name: maskName(user.full_name)
-      };
+    // Don't mask if viewing own profile
+    if (currentUserId === id) {
+      return user;
     }
     
-    return user;
+    // Check if current user is seller of the product (to view bidder info)
+    if (productId && currentUserId) {
+      const currentUser = await userModel.findById(currentUserId);
+      if (currentUser?.role === 'seller') {
+        const product = await productModel.findById(productId);
+        if (product?.seller_id === currentUserId) {
+          // Seller viewing their own product's bidders - don't mask
+          return user;
+        }
+      }
+    }
+    
+    // Mask name for everyone else
+    return {
+      ...user,
+      full_name: maskName(user.full_name)
+    };
   },
 
   findByEmail: async (email: string) => {

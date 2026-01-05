@@ -29,7 +29,7 @@ export const BidController = {
       
       // Check if user is the seller of this product
       let isSeller = false;
-      if (req.user) {
+      if (req.user && req.user.role === 'seller') {
         try {
           const { ProductService } = await import('../services/product.service.js');
           const product = await ProductService.getById(productId);

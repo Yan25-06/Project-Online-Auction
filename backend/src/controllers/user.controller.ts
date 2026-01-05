@@ -6,7 +6,8 @@ export const UserController = {
     try {
       const id = req.params.id as string;
       const currentUserId = (req as any).user?.id;
-      const user = await UserService.findById(id, currentUserId);
+      const productId = req.query.productId as string | undefined;
+      const user = await UserService.findById(id, currentUserId, productId);
       if (!user) return res.status(404).json({ error: "User not found" });
       return res.status(200).json(user);
     } catch (err: any) {
