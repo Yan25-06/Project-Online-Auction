@@ -102,6 +102,17 @@ export const UserController = {
     }
   },
 
+  checkEmailExists: async (req: Request, res: Response) => {
+    try {
+      const email = String(req.query.email || "");
+      if (!email) return res.status(400).json({ error: "email is required" });
+      const exists = await UserService.checkEmailExists(email);
+      return res.status(200).json({ exists });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
   delete: async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;

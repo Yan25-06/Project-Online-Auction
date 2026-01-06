@@ -11,6 +11,7 @@ import {
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthService } from "../services/authService";
+import { UserService } from "../services/backendService";
 import { useToast } from "../components/common/Toast";
 import ReCAPTCHA from "react-google-recaptcha";
 import { validateRegisterForm, validateOtp } from "../utils/validators";
@@ -67,6 +68,15 @@ const RegisterPage = () => {
 
     try {
       setLoading(true);
+      
+      // Kiểm tra email đã tồn tại chưa
+      const emailCheck = await UserService.checkEmailExists(formData.email);
+      if (emailCheck.exists) {
+        setFieldErrors({ email: "Email này đã được đăng ký" });
+        setError("Email này đã được sử dụng. Vui lòng sử dụng email khác hoặc đăng nhập.");
+        return;
+      }
+      
       // Send OTP email via Supabase
       await AuthService.sendOtp(formData.email);
       setStep(2);

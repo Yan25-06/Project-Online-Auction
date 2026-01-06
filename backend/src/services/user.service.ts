@@ -93,4 +93,9 @@ export const UserService = {
   delete: async (id: string) => {
     return await userModel.delete(id);
   },
+
+  checkEmailExists: async (email: string): Promise<boolean> => {
+    const user = await userModel.findByEmail(email);
+    return user !== null;
+  },
 };

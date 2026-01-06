@@ -458,6 +458,13 @@ export const UserService = {
     const response = await apiClient.post(`/users/${userId}/reject-upgrade`);
     return response.data;
   },
+
+  checkEmailExists: async (email) => {
+    const response = await apiClient.get("/users/check-email", {
+      params: { email },
+    });
+    return response.data;
+  },
 };
 
 export const BlockedBidderService = {

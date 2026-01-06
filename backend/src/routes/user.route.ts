@@ -9,6 +9,7 @@ import { requireAuth, requireRole, optionalAuth } from "../middlewares/auth.midd
 userRouter.get("/", UserController.findAll);
 userRouter.post("/", UserController.create);
 userRouter.get("/email", UserController.getByEmail);
+userRouter.get("/check-email", UserController.checkEmailExists);
 
 userRouter.get(
   "/upgrade-requests",
