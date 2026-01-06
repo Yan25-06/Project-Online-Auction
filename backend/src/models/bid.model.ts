@@ -3,7 +3,7 @@ import type { Bid, CreateBidInput, BidWithUser, BidHistoryItem } from 'shared-au
 
 export const bidModel = {
   // Create bid
-  async create(bidData: CreateBidInput): Promise<Bid> {
+  async create(bidData: Partial<Bid>): Promise<Bid> {
     const { data, error } = await supabase
       .from('bids')
       .insert(bidData)
@@ -52,7 +52,7 @@ export const bidModel = {
       .select('*')
       .eq('product_id', productId)
       .eq('is_rejected', false)
-      .order('bid_amount', { ascending: false })
+      .order('max_bid_amount', { ascending: false })
       .order('created_at', { ascending: true }) // Earlier bid wins in case of tie
       .limit(1)
       .single();
@@ -71,13 +71,40 @@ export const bidModel = {
       .select('*')
       .eq('product_id', productId)
       .eq('is_rejected', false)
-      .order('bid_amount', { ascending: false })
+      .order('max_bid_amount', { ascending: false })
       .order('created_at', { ascending: true })
       .limit(2);
 
     if (error) throw error;
     if (!data || data.length < 2) return null;
     return data[1];
+  },
+
+  // Get all active bids for a product ordered by max_bid_amount
+  async getAllActiveBidsSorted(productId: string): Promise<Bid[]> {
+    const { data, error } = await supabase
+      .from('bids')
+      .select('*')
+      .eq('product_id', productId)
+      .eq('is_rejected', false)
+      .order('max_bid_amount', { ascending: false })
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Update bid amount (for auto-raising)
+  async updateBidAmount(bidId: string, newBidAmount: number): Promise<Bid> {
+    const { data, error } = await supabase
+      .from('bids')
+      .update({ bid_amount: newBidAmount })
+      .eq('id', bidId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 
   // Get bids by bidder

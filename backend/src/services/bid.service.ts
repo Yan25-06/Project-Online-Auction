@@ -6,7 +6,12 @@ import { maskName } from '../helper/maskName.js';
 
 export const BidService = {
   create: async (bidData: any) => {
-    const { product_id, bidder_id, bid_amount } = bidData;
+    const { product_id, bidder_id, max_bid_amount } = bidData;
+
+    // Validate max_bid_amount
+    if (!max_bid_amount || max_bid_amount <= 0) {
+      throw new Error('Max bid amount is required and must be greater than 0');
+    }
 
     // Check if bidder is blocked
     const isBlocked = await bidModel.isBidderBlocked(product_id, bidder_id);
@@ -51,7 +56,7 @@ export const BidService = {
           const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
           const productUrl = frontendUrl ? `${frontendUrl}/products/${product.id}` : '';
           const subject = `Bid denied for "${product.name}"`;
-          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>Your attempt to place a bid of <strong>${bid_amount}</strong> on <a href="${productUrl}">${product.name}</a> was denied because your account's rating is too low to place bids. If you believe this is an error, please contact support.</p>`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p><p>Your attempt to place a bid of <strong>${max_bid_amount}</strong> on <a href="${productUrl}">${product.name}</a> was denied because your account's rating is too low to place bids. If you believe this is an error, please contact support.</p>`;
           await EmailService.sendMail(bidder.email, subject, html);
         }
       } catch (e) {
@@ -74,21 +79,81 @@ export const BidService = {
       }
     }
 
-    // Check bid step/increment and amount greater than current price
-    const highest = await bidModel.getHighestBid(product_id);
-    const currentPrice = product.current_price || 0;
+    // Get all active bids sorted by max_bid_amount
+    const allBids = await bidModel.getAllActiveBidsSorted(product_id);
+    const currentPrice = product.current_price || product.starting_price || 0;
     const increment = product.bid_increment || 0;
-    const minRequired = (highest && highest.bid_amount) ? (highest.bid_amount + increment) : (currentPrice + increment);
 
-    if (bid_amount < minRequired) {
-      throw new Error(`Bid must be at least ${minRequired}`);
+    // Validate max_bid_amount against current requirements
+    const minRequired = currentPrice + increment;
+    if (max_bid_amount < minRequired) {
+      throw new Error(`Max bid amount must be at least ${minRequired}`);
     }
 
-    // Create bid
-    const bid = await bidModel.create(bidData);
+    // Calculate actual bid_amount based on auto-bidding logic
+    let actualBidAmount = minRequired;
+    let currentWinnerNeedsUpdate = false;
+    let updatedWinnerBidAmount = 0;
+    let currentWinnerBid = null;
 
-    // Update product price and bid count
-    await productModel.updatePriceAndBidCount(product_id, bid_amount);
+    if (allBids.length > 0) {
+      // Find the highest bid that's not from the current bidder
+      const otherBids = allBids.filter(b => b.bidder_id !== bidder_id);
+      
+      if (otherBids.length > 0 && otherBids[0]) {
+        const highestOtherBid = otherBids[0];
+        const highestOtherMax = highestOtherBid.max_bid_amount || highestOtherBid.bid_amount;
+        
+        // If current bidder's max_bid is higher than highest other bid's max
+        if (max_bid_amount > highestOtherMax) {
+          // Current bidder wins with bid = highest other's max + increment
+          actualBidAmount = highestOtherMax + increment;
+        } else if (max_bid_amount === highestOtherMax) {
+          // Same max bid - current bidder loses (bid placed later)
+          throw new Error(`Your max bid amount must be higher than ${highestOtherMax} to win`);
+        } else {
+          // Current bidder's max is lower than highest other's max
+          // Highest other person wins, need to auto-raise their bid_amount
+          currentWinnerBid = highestOtherBid;
+          currentWinnerNeedsUpdate = true;
+          updatedWinnerBidAmount = max_bid_amount + increment;
+          
+          // Still create the new bid for current bidder at their max
+          actualBidAmount = max_bid_amount;
+        }
+      } else if (allBids[0]) {
+        // All existing bids are from current bidder - just update with new max
+        const existingBid = allBids[0];
+        const existingMax = existingBid.max_bid_amount || existingBid.bid_amount;
+        if (max_bid_amount <= existingMax) {
+          throw new Error(`Your new max bid must be higher than your current max bid of ${existingMax}`);
+        }
+        actualBidAmount = currentPrice; // Keep current price
+      }
+    }
+
+    // Create bid with calculated actual amount
+    const newBidData = {
+      product_id,
+      bidder_id,
+      bid_amount: actualBidAmount,
+      max_bid_amount: max_bid_amount,
+      is_auto_bid: true,
+      is_rejected: false
+    };
+
+    const bid = await bidModel.create(newBidData);
+
+    // If current winner needs to be updated (auto-raise)
+    if (currentWinnerNeedsUpdate && currentWinnerBid) {
+      // Update the winner's bid_amount (auto-raise to beat new bid)
+      await bidModel.updateBidAmount(currentWinnerBid.id, updatedWinnerBidAmount);
+      // Update product price to winner's new bid_amount
+      await productModel.updatePriceAndBidCount(product_id, updatedWinnerBidAmount);
+    } else {
+      // Update product price and bid count to new bid
+      await productModel.updatePriceAndBidCount(product_id, actualBidAmount);
+    }
 
     // Auto-extend auction if bid placed within threshold time before end
     try {
@@ -112,35 +177,73 @@ export const BidService = {
       // Fetch involved users
       const bidder = await userModel.findById(bidder_id);
       const seller = product.seller || (product.seller_id ? await userModel.findById(product.seller_id) : null);
-      const previousHighest = highest; // fetched before creating the new bid
-      const previousBidder = previousHighest?.bidder_id ? await userModel.findById(previousHighest.bidder_id) : null;
-
+      
       const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
       const productUrl = frontendUrl ? `${frontendUrl}/products/${product.id}` : ''; 
 
       const mailPromises: Promise<any>[] = [];
 
-      // Bidder confirmation
-      if (bidder && bidder.email) {
-        const subject = `Your bid for "${product.name}" is placed`;
-        const html = `<p>Hi ${bidder.full_name || 'there'},</p>
-          <p>Your bid of <strong>${bid_amount}</strong> for <a href="${productUrl}">${product.name}</a> has been placed successfully.</p>`;
-        mailPromises.push(EmailService.sendMail(bidder.email, subject, html));
-      }
+      // Determine who is winning and what to notify
+      if (currentWinnerNeedsUpdate && currentWinnerBid) {
+        // Case: New bidder has lower max, current winner auto-raised
+        const winner = await userModel.findById(currentWinnerBid.bidder_id);
+        
+        // Notify new bidder: they were outbid
+        if (bidder && bidder.email) {
+          const subject = `You were outbid on "${product.name}"`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p>
+            <p>Your bid for <a href="${productUrl}">${product.name}</a> has been placed.</p>
+            <p>Your max bid: <strong>${max_bid_amount.toLocaleString('vi-VN')} đ</strong></p>
+            <p>However, you were immediately outbid. Current price: <strong>${updatedWinnerBidAmount.toLocaleString('vi-VN')} đ</strong></p>
+            <p>You can increase your max bid to compete.</p>`;
+          mailPromises.push(EmailService.sendMail(bidder.email, subject, html));
+        }
 
-      // Notify previous highest bidder if they exist and are different from the new bidder
-      if (previousBidder && previousBidder.email && previousBidder.id !== bidder_id) {
-        const subject = `You were outbid on "${product.name}"`;
-        const html = `<p>Hi ${previousBidder.full_name || 'there'},</p>
-          <p>Your previous bid of <strong>${previousHighest?.bid_amount || ''}</strong> has been outbid by ${bidder?.full_name || 'another bidder'} with <strong>${bid_amount}</strong> on <a href="${productUrl}">${product.name}</a>.</p>`;
-        mailPromises.push(EmailService.sendMail(previousBidder.email, subject, html));
+        // Notify current winner: their bid was auto-raised
+        if (winner && winner.email) {
+          const subject = `Your bid was auto-raised on "${product.name}"`;
+          const html = `<p>Hi ${winner.full_name || 'there'},</p>
+            <p>Someone placed a bid on <a href="${productUrl}">${product.name}</a>.</p>
+            <p>Your bid was automatically raised to <strong>${updatedWinnerBidAmount.toLocaleString('vi-VN')} đ</strong></p>
+            <p>You are still winning with your max bid of <strong>${currentWinnerBid.max_bid_amount?.toLocaleString('vi-VN')} đ</strong></p>`;
+          mailPromises.push(EmailService.sendMail(winner.email, subject, html));
+        }
+      } else {
+        // Case: New bidder is winning
+        
+        // Get the person who was outbid (if any)
+        const allActiveBids = await bidModel.getAllActiveBidsSorted(product_id);
+        const previousHighest = allActiveBids.find(b => b.id !== bid.id && b.bidder_id !== bidder_id);
+        const previousBidder = previousHighest?.bidder_id ? await userModel.findById(previousHighest.bidder_id) : null;
+
+        // Notify new bidder: success
+        if (bidder && bidder.email) {
+          const subject = `Your bid for "${product.name}" is placed`;
+          const html = `<p>Hi ${bidder.full_name || 'there'},</p>
+            <p>Your bid for <a href="${productUrl}">${product.name}</a> has been placed successfully.</p>
+            <p>Your max bid: <strong>${max_bid_amount.toLocaleString('vi-VN')} đ</strong></p>
+            <p>Current bid: <strong>${actualBidAmount.toLocaleString('vi-VN')} đ</strong></p>
+            <p>You are currently winning!</p>`;
+          mailPromises.push(EmailService.sendMail(bidder.email, subject, html));
+        }
+
+        // Notify previous highest bidder if they were outbid
+        if (previousBidder && previousBidder.email && previousBidder.id !== bidder_id) {
+          const subject = `You were outbid on "${product.name}"`;
+          const html = `<p>Hi ${previousBidder.full_name || 'there'},</p>
+            <p>You have been outbid on <a href="${productUrl}">${product.name}</a>.</p>
+            <p>New current bid: <strong>${actualBidAmount.toLocaleString('vi-VN')} đ</strong></p>`;
+          mailPromises.push(EmailService.sendMail(previousBidder.email, subject, html));
+        }
       }
 
       // Notify seller
       if (seller && seller.email) {
+        const finalPrice = currentWinnerNeedsUpdate ? updatedWinnerBidAmount : actualBidAmount;
         const subject = `New bid on your product "${product.name}"`;
         const html = `<p>Hi ${seller.full_name || 'there'},</p>
-          <p>Your product <a href="${productUrl}">${product.name}</a> received a new bid of <strong>${bid_amount}</strong> by ${bidder?.full_name || 'a bidder'}.</p>`;
+          <p>Your product <a href="${productUrl}">${product.name}</a> received a new bid.</p>
+          <p>Current price: <strong>${finalPrice.toLocaleString('vi-VN')} đ</strong></p>`;
         mailPromises.push(EmailService.sendMail(seller.email, subject, html));
       }
 

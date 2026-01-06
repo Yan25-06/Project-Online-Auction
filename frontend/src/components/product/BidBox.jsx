@@ -8,7 +8,7 @@ import { useToast } from '../common/Toast';
 // import { is } from 'drizzle-orm';
 
 const BidBox = ({ product, onTopBidderChange }) => {
-  const [bidAmount, setBidAmount] = useState('');
+  const [maxBidAmount, setMaxBidAmount] = useState('');
   const [placingBid, setPlacingBid] = useState(false);
   const [bidHistory, setBidHistory] = useState([]);
   const [highestBid, setHighestBid] = useState(null);
@@ -99,18 +99,19 @@ const BidBox = ({ product, onTopBidderChange }) => {
       }
 
       const inc = product.bid_increment || 0;
-      const minReq = (highestBid && highestBid.bid_amount) ? (highestBid.bid_amount + inc) : ((product.current_price || 0) + inc);
-      const numeric = Number(bidAmount);
-      if (!bidAmount || isNaN(numeric)) throw new Error('Vui lòng nhập giá hợp lệ');
-      if (numeric < minReq) throw new Error(`Giá đặt phải lớn hơn hoặc bằng ${minReq}`);
+      const currentPrice = product.current_price || 0;
+      const minReq = currentPrice + inc;
+      const numeric = Number(maxBidAmount);
+      if (!maxBidAmount || isNaN(numeric)) throw new Error('Vui lòng nhập giá tối đa hợp lệ');
+      if (numeric < minReq) throw new Error(`Giá tối đa phải lớn hơn hoặc bằng ${minReq.toLocaleString('vi-VN')} đ`);
 
       const payload = {
         product_id: product.id,
         bidder_id: user.id,
-        bid_amount: numeric
+        max_bid_amount: numeric
       };
 
-      // Backend will validate rating requirement (80% threshold)
+      // Backend will validate rating requirement (80% threshold) and calculate actual bid_amount
       const res = await BidService.create(payload);
 
       const fresh = await ProductService.getById(product.id);
@@ -119,12 +120,14 @@ const BidBox = ({ product, onTopBidderChange }) => {
       setHighestBid(hb || null);
       const historyRes = await BidService.getHistory(product.id);
       setBidHistory(Array.isArray(historyRes) ? historyRes : historyRes.data || []);
-      setBidAmount('');
+      setMaxBidAmount('');
 
       if (res && res.bidder_id) {
         const bidder = await UserService.getById(res.bidder_id, product.id);
         if (onTopBidderChange) onTopBidderChange(bidder.full_name || '');
       }
+
+      toast.show(`Đặt giá thành công! Giá hiện tại: ${res.bid_amount?.toLocaleString('vi-VN')} đ`, { type: 'success' });
 
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || 'Đặt giá thất bại';
@@ -204,29 +207,44 @@ const BidBox = ({ product, onTopBidderChange }) => {
           {ratingError}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="col-span-1 flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              placeholder="Nhập giá đặt"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none"
-            />
-            <button
-              onClick={placeBid}
-              className="bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg"
-              disabled={placingBid}
-            >
-              {placingBid ? 'Đang gửi...' : 'Đấu giá'}
-            </button>
+        <div className="mb-4">
+          <div className="mb-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>🔵 Đấu giá tự động:</strong> Chỉ cần đặt giá tối đa mà bạn sẵn sàng trả. Hệ thống sẽ tự động đấu giá thay bạn với giá thấp nhất có thể để thắng.
+            </p>
           </div>
-          {product.buy_now_price && (
-            <button className="col-span-1 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg cursor-pointer">
-              Mua ngay
-            </button>
-          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-1 flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Giá tối đa của bạn
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  value={maxBidAmount}
+                  onChange={(e) => setMaxBidAmount(e.target.value)}
+                  placeholder={`Tối thiểu ${((product.current_price || 0) + (product.bid_increment || 0)).toLocaleString('vi-VN')} đ`}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400"
+                />
+                <button
+                  onClick={placeBid}
+                  className="bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg whitespace-nowrap"
+                  disabled={placingBid}
+                >
+                  {placingBid ? 'Đang gửi...' : 'Đấu giá'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Giá hiện tại: <strong className="text-red-600">{(product.current_price || 0).toLocaleString('vi-VN')} đ</strong>
+              </p>
+            </div>
+            {product.buy_now_price && (
+              <button className="col-span-1 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg cursor-pointer">
+                Mua ngay
+              </button>
+            )}
+          </div>
         </div>
       )}
 
