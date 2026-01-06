@@ -3,7 +3,7 @@ import { supabase } from "../config/supabase";
 // 1. Create the Axios Instance
 // We don't export this directly to force the app to use the functions below
 const apiClient = axios.create({
-  baseURL: "http://localhost:3000/api", // Your Express Backend URL
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   timeout: 20000,
   // headers: {
   //   'Content-Type': 'application/json',
