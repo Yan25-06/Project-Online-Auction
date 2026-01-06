@@ -15,29 +15,13 @@ import { sharedFunction } from 'shared-auction/test.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
-// CORS configuration - allow multiple origins
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://project-online-auction.vercel.app',
-  'https://project-online-auction-be.vercel.app',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
+// CORS configuration - simplified for Vercel
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins for now, or specify your frontend domain
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+}));
   maxAge: 86400
 }));
 
