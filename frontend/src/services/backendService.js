@@ -4,7 +4,7 @@ import { supabase } from "../config/supabase";
 // We don't export this directly to force the app to use the functions below
 const apiClient = axios.create({
   baseURL: "http://localhost:3000/api", // Your Express Backend URL
-  timeout: 10000,
+  timeout: 20000,
   // headers: {
   //   'Content-Type': 'application/json',
   // },
