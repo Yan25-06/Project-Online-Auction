@@ -625,9 +625,12 @@ const ProductDetails = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Người bán</p>
-                  <p className="font-bold text-sm text-gray-800">
+                  <Link 
+                    to={`/user/${product.seller_id}`}
+                    className="font-bold text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                  >
                     {product.seller?.full_name || "Ẩn danh"}
-                  </p>
+                  </Link>
                   <div className="flex items-center gap-1 text-xs">
                     <span className={`font-medium ${(product.seller?.rating_score || 0) >= 0.80 ? 'text-green-600' : (product.seller?.rating_score || 0) >= 0.50 ? 'text-yellow-600' : 'text-red-600'}`}>
                       {product.seller?.positive_ratings || 0}+/{(product.seller?.total_ratings || 0) - (product.seller?.positive_ratings || 0)}-

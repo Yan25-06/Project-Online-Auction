@@ -25,6 +25,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminRoute from "./components/AdminRoute";
+import UserRatingPage from "./pages/UserRatingPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -98,6 +99,7 @@ const router = createBrowserRouter(
             </AdminRoute>
           }
         />
+        <Route path="/user/:id" element={<UserRatingPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="/user" element={<UserPage />} />
