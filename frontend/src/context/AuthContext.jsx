@@ -17,10 +17,18 @@ export const AuthProvider = ({ children }) => {
                 const { data: { session } } = await supabase.auth.getSession();
                 setSession(session);
                 setUser(session?.user ?? null);
-                if (session?.access_token)
+                
+                // Lưu token vào localStorage nếu có
+                if (session?.access_token) {
                     lastAccessToken.current = session.access_token;
-                if (session?.user?.id)
+                    localStorage.setItem("token", session.access_token);
+                } else {
+                    localStorage.removeItem("token");
+                }
+                
+                if (session?.user?.id) {
                     lastUserId.current = session.user.id;
+                }
             } catch (error) {
                 console.error("Lỗi check session:", error);
             } finally {
@@ -47,9 +55,14 @@ export const AuthProvider = ({ children }) => {
                     setUser(session?.user ?? null);
                     setLoading(false);
                     
+                    // Lưu token vào localStorage để backend có thể dùng
                     if (session?.access_token) {
                         lastAccessToken.current = session.access_token;
+                        localStorage.setItem("token", session.access_token);
+                    } else {
+                        localStorage.removeItem("token");
                     }
+                    
                     if (session?.user?.id) {
                         lastUserId.current = session.user.id;
                     }
