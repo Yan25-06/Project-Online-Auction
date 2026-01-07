@@ -84,6 +84,11 @@ export const BidService = {
     const currentPrice = product.current_price || product.starting_price || 0;
     const increment = product.bid_increment || 0;
 
+    console.log('[BID DEBUG] allBids count:', allBids.length);
+    console.log('[BID DEBUG] allBids:', allBids.map(b => ({ id: b.id, bidder_id: b.bidder_id, max_bid_amount: b.max_bid_amount, bid_amount: b.bid_amount })));
+    console.log('[BID DEBUG] current bidder_id:', bidder_id);
+    console.log('[BID DEBUG] currentPrice:', currentPrice, 'increment:', increment, 'max_bid_amount:', max_bid_amount);
+
     // Validate max_bid_amount against current requirements
     const minRequired = currentPrice + increment;
     if (max_bid_amount < minRequired) {
@@ -99,6 +104,8 @@ export const BidService = {
     if (allBids.length > 0) {
       // Find the highest bid that's not from the current bidder
       const otherBids = allBids.filter(b => b.bidder_id !== bidder_id);
+      console.log('[BID DEBUG] otherBids count:', otherBids.length);
+      console.log('[BID DEBUG] otherBids:', otherBids.map(b => ({ id: b.id, bidder_id: b.bidder_id, max_bid_amount: b.max_bid_amount })));
       
       if (otherBids.length > 0 && otherBids[0]) {
         const highestOtherBid = otherBids[0];
@@ -132,6 +139,8 @@ export const BidService = {
       }
     }
 
+    console.log('[BID DEBUG] actualBidAmount:', actualBidAmount, 'currentWinnerNeedsUpdate:', currentWinnerNeedsUpdate, 'updatedWinnerBidAmount:', updatedWinnerBidAmount);
+    
     // Create bid with calculated actual amount
     const newBidData = {
       product_id,
@@ -143,17 +152,24 @@ export const BidService = {
     };
 
     const bid = await bidModel.create(newBidData);
+    console.log('[BID DEBUG] Created bid:', bid.id, 'bid_amount:', bid.bid_amount);
 
     // If current winner needs to be updated (auto-raise)
     if (currentWinnerNeedsUpdate && currentWinnerBid) {
+      console.log('[BID DEBUG] Updating current winner bid_amount to:', updatedWinnerBidAmount);
       // Update the winner's bid_amount (auto-raise to beat new bid)
       await bidModel.updateBidAmount(currentWinnerBid.id, updatedWinnerBidAmount);
       // Update product price to winner's new bid_amount
+      console.log('[BID DEBUG] Updating product price to:', updatedWinnerBidAmount);
       await productModel.updatePriceAndBidCount(product_id, updatedWinnerBidAmount);
     } else {
       // Update product price and bid count to new bid
+      console.log('[BID DEBUG] Updating product price to:', actualBidAmount);
       await productModel.updatePriceAndBidCount(product_id, actualBidAmount);
     }
+    
+    const updatedProduct = await productModel.findById(product_id);
+    console.log('[BID DEBUG] Final product current_price:', updatedProduct?.current_price, 'bid_count:', updatedProduct?.bid_count);
 
     // Auto-extend auction if bid placed within threshold time before end
     try {

@@ -7,7 +7,7 @@ import { AuthService } from '../../services/authService';
 import { useToast } from '../common/Toast';
 // import { is } from 'drizzle-orm';
 
-const BidBox = ({ product, onTopBidderChange }) => {
+const BidBox = ({ product, onTopBidderChange, onProductUpdate }) => {
   const [maxBidAmount, setMaxBidAmount] = useState('');
   const [placingBid, setPlacingBid] = useState(false);
   const [bidHistory, setBidHistory] = useState([]);
@@ -126,8 +126,13 @@ const BidBox = ({ product, onTopBidderChange }) => {
         const bidder = await UserService.getById(res.bidder_id, product.id);
         if (onTopBidderChange) onTopBidderChange(bidder.full_name || '');
       }
+      
+      // Update parent component with fresh product data
+      if (fresh && onProductUpdate) {
+        onProductUpdate(fresh);
+      }
 
-      toast.show(`Đặt giá thành công! Giá hiện tại: ${res.bid_amount?.toLocaleString('vi-VN')} đ`, { type: 'success' });
+      toast.show(`Đặt giá thành công! Giá hiện tại: ${fresh?.current_price?.toLocaleString('vi-VN')} đ`, { type: 'success' });
 
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || 'Đặt giá thất bại';
