@@ -82,15 +82,30 @@ export const bidModel = {
 
   // Get all active bids for a product ordered by max_bid_amount
   async getAllActiveBidsSorted(productId: string): Promise<Bid[]> {
+    // Use raw query to properly sort with COALESCE handling NULL max_bid_amount
     const { data, error } = await supabase
-      .from('bids')
-      .select('*')
-      .eq('product_id', productId)
-      .eq('is_rejected', false)
-      .order('max_bid_amount', { ascending: false })
-      .order('created_at', { ascending: true });
+      .rpc('get_active_bids_sorted', { p_product_id: productId });
 
-    if (error) throw error;
+    if (error) {
+      // Fallback to client-side sorting if RPC doesn't exist
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('bids')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_rejected', false);
+
+      if (fallbackError) throw fallbackError;
+      
+      // Sort in JavaScript: treat null max_bid_amount as bid_amount
+      const sorted = (fallbackData || []).sort((a, b) => {
+        const aMax = a.max_bid_amount ?? a.bid_amount;
+        const bMax = b.max_bid_amount ?? b.bid_amount;
+        if (bMax !== aMax) return bMax - aMax; // Descending by max
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); // Ascending by time
+      });
+      
+      return sorted;
+    }
     return data || [];
   },
 

@@ -58,15 +58,21 @@ serve(async (req) => {
         const sellerEmail = sellerData?.email
 
         // --- BƯỚC B: LẤY BIDS VÀ JOIN VỚI NGƯỜI MUA (BIDDER) ---
+        // LƯU Ý: Với hệ thống auto-bid, cần sort theo max_bid_amount để tìm winner
+        // Người có max_bid_amount cao nhất + đặt trước sẽ thắng
         const { data: bids } = await supabase
             .from('bids')
             .select(`
                 bid_amount,
+                max_bid_amount,
                 bidder_id,
-                users ( email )
+                created_at,
+                users ( email, full_name )
             `)
             .eq('product_id', product.id)
-            .order('bid_amount', { ascending: false }) // Giá cao nhất lên đầu
+            .eq('is_rejected', false) // Chỉ lấy bid không bị từ chối
+            .order('max_bid_amount', { ascending: false }) // Sort theo max_bid (cao nhất trước)
+            .order('created_at', { ascending: true }) // Nếu cùng max_bid, người đặt trước thắng
 
         // --- BƯỚC C: XỬ LÝ LOGIC GỬI MAIL ---
         if (bids && bids.length > 0) {
@@ -74,14 +80,28 @@ serve(async (req) => {
             const winner = bids[0]
             // @ts-ignore
             const winnerEmail = winner.users?.email
-            const winningPrice = winner.bid_amount
+            // @ts-ignore
+            const winnerName = winner.users?.full_name || 'Người thắng'
+            const winningPrice = winner.bid_amount // Giá thực tế người thắng phải trả
+            const maxBidAmount = winner.max_bid_amount // Giá tối đa người đó đã đặt
 
             // 1. Gửi cho Người Thắng
             if (winnerEmail) {
                 await sendEmailSMTP(
                     winnerEmail, 
                     `🎉 Chúc mừng! Bạn đã thắng đấu giá: ${product.name}`,
-                    `<p>Bạn đã chiến thắng sản phẩm <strong>${product.name}</strong> với mức giá <strong>${winningPrice}</strong>.</p>`
+                    `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #4CAF50;">🎉 Chúc mừng ${winnerName}!</h2>
+                        <p>Bạn đã chiến thắng phiên đấu giá sản phẩm <strong>${product.name}</strong>!</p>
+                        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Giá thắng:</strong> ${winningPrice?.toLocaleString('vi-VN')} đ</p>
+                            <p style="margin: 5px 0;"><strong>Giá tối đa của bạn:</strong> ${maxBidAmount?.toLocaleString('vi-VN')} đ</p>
+                        </div>
+                        <p>Vui lòng đăng nhập vào hệ thống để hoàn tất thanh toán và nhận sản phẩm.</p>
+                        <p style="color: #666; font-size: 12px; margin-top: 30px;">Email này được gửi tự động từ Sàn Đấu Giá.</p>
+                    </div>
+                    `
                 )
             }
 
@@ -90,7 +110,18 @@ serve(async (req) => {
                 await sendEmailSMTP(
                     sellerEmail,
                     `💰 Sản phẩm của bạn đã bán thành công: ${product.name}`,
-                    `<p>Sản phẩm <strong>${product.name}</strong> đã được bán với giá <strong>${winningPrice}</strong>.</p>`
+                    `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #2196F3;">💰 Bán hàng thành công!</h2>
+                        <p>Sản phẩm <strong>${product.name}</strong> của bạn đã được bán thành công!</p>
+                        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Giá bán:</strong> ${winningPrice?.toLocaleString('vi-VN')} đ</p>
+                            <p style="margin: 5px 0;"><strong>Người mua:</strong> ${winnerName}</p>
+                        </div>
+                        <p>Vui lòng đăng nhập vào hệ thống để xử lý đơn hàng.</p>
+                        <p style="color: #666; font-size: 12px; margin-top: 30px;">Email này được gửi tự động từ Sàn Đấu Giá.</p>
+                    </div>
+                    `
                 )
             }
 

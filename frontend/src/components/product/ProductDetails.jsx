@@ -685,6 +685,7 @@ const ProductDetails = () => {
             <BidBox
               product={product}
               onTopBidderChange={(masked) => setTopBidderName(masked)}
+              onProductUpdate={(freshProduct) => setProduct(freshProduct)}
             />
           </div>
 
